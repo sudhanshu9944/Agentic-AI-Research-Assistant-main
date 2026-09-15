@@ -2,6 +2,10 @@
 
 A production-ready, multi-agent research assistant powered by **LangGraph**, **FastAPI**, and **React + Vite**. Enter any research topic and the system will autonomously plan, search, analyze, summarize, and generate a comprehensive report with citations.
 
+### 🌐 Live Demo
+
+**[Open Live App](https://agentic-ai-research-assistant-b83k.onrender.com/)**
+
 ---
 
 ## ✨ Features
