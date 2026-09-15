@@ -4,7 +4,9 @@ A production-ready, multi-agent research assistant powered by **LangGraph**, **F
 
 ### 🌐 Live Demo
 
-**[Open Live App](https://agentic-ai-research-assistant-b83k.onrender.com/)**
+[![Live Demo](https://img.shields.io/badge/Live_Demo-Open_App-00C7B7?style=for-the-badge)](https://agentic-ai-research-assistant-b83k.onrender.com/)
+
+**Live app:** [https://agentic-ai-research-assistant-b83k.onrender.com/](https://agentic-ai-research-assistant-b83k.onrender.com/)
 
 ---
 
@@ -112,8 +114,8 @@ agentic ai project/
 ### 1. Clone & Setup
 
 ```bash
-git clone <repo-url>
-cd "agentic ai project"
+git clone https://github.com/sudhanshu9944/Agentic-AI-Research-Assistant-main.git
+cd Agentic-AI-Research-Assistant-main
 
 # Create virtual environment
 uv venv
