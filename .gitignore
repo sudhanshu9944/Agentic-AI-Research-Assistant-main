@@ -1,0 +1,59 @@
+# Environment
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual Environment
+.venv/
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project Generated
+/reports/
+/memory/
+
+# Testing
+.pytest_cache/
+htmlcov/
+.coverage
+coverage.xml
+
+# Credentials
+*.pem
+*.p12
+*.pfx
+credentials.json
+*-credentials.json
+service-account*.json
+secrets.yaml
+secrets.yml
+
+# Misc
+*.log
+
+# Node
+node_modules/
+dist/
+
