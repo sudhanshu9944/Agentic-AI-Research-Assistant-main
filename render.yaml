@@ -8,12 +8,14 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: "3.12"
-      - key: OPENROUTER_API_KEY
+      - key: GROQ_API_KEY
         sync: false # Set this securely in the Render Dashboard
       - key: DEFAULT_MODEL
-        value: llama-3.3-70b-versatile
+        value: openai/gpt-oss-120b
       - key: RERANKER_MODEL
-        value: llama-3.1-8b-instant
+        value: openai/gpt-oss-20b
+      - key: OPENROUTER_BASE_URL
+        value: https://api.groq.com/openai/v1
       - key: DEBUG
         value: "false"
 
@@ -25,7 +27,7 @@ services:
     staticPublishPath: frontend/dist
     envVars:
       - key: NODE_VERSION
-        value: "20"
+        value: "24"
       - key: VITE_API_BASE_URL
         fromService:
           name: research-backend

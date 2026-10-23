@@ -40,9 +40,7 @@ async def researcher_node(state: dict) -> dict:
     if not search_queries:
         search_queries = [user_query]
 
-    logger.info(
-        f"[Researcher] Executing {len(search_queries)} search queries"
-    )
+    logger.info(f"[Researcher] Executing {len(search_queries)} search queries")
 
     import asyncio
 
@@ -78,17 +76,21 @@ async def researcher_node(state: dict) -> dict:
 
     for _, query, results in completed:
         for result in results:
+            if not result.get("snippet", "").strip():
+                continue
             url = result.get("url", "")
             if url and url not in seen_urls:
                 seen_urls.add(url)
                 all_results.append(result)
-                all_sources.append({
-                    "title": result.get("title", "Untitled"),
-                    "url": url,
-                    "snippet": result.get("snippet", ""),
-                    "source": result.get("source", "unknown"),
-                    "query": query,
-                })
+                all_sources.append(
+                    {
+                        "title": result.get("title", "Untitled"),
+                        "url": url,
+                        "snippet": result.get("snippet", ""),
+                        "source": result.get("source", "unknown"),
+                        "query": query,
+                    }
+                )
             elif not url:
                 all_results.append(result)
 
@@ -96,6 +98,12 @@ async def researcher_node(state: dict) -> dict:
         f"[Researcher] Collected {len(all_results)} unique results "
         f"from {len(search_queries)} queries"
     )
+
+    if not all_sources:
+        raise RuntimeError(
+            "No usable sources were returned by the search providers. "
+            "Try a more specific topic or retry when search is available."
+        )
 
     return {
         "search_results": all_results,

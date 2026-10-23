@@ -1,16 +1,17 @@
 # Stage 1: Build React App
-FROM node:20-alpine AS build
+FROM node:24-alpine AS build
 
 WORKDIR /app
 
 # Install dependencies
-COPY package.json ./
-RUN npm install
+COPY package.json package-lock.json ./
+RUN npm ci
 
 # Copy source and configurations
 COPY vite.config.js ./
 COPY index.html ./
 COPY src/ ./src/
+COPY scripts/ ./scripts/
 
 # Compile React project to static assets
 RUN npm run build

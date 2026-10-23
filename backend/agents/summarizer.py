@@ -25,8 +25,8 @@ CRITICAL ACCURACY RULES:
 
 Create a summary that includes:
 1. **Overview**: A concise opening paragraph (2-3 sentences) stating the core finding
-2. **Key Findings**: 5-8 bullet points, each stating one specific, factual finding
-3. **Notable Trends**: 2-4 patterns or trends observed across the research
+2. **Key Findings**: 3-5 bullet points, each stating one specific, factual finding
+3. **Notable Trends**: 1-2 patterns or trends observed across the research
 4. **Implications**: What these findings mean in practical terms
 
 Guidelines:
@@ -35,7 +35,7 @@ Guidelines:
 - Start each bullet point with a **bold key term** followed by a colon
 - Highlight the most important and well-supported findings first
 - Format using Markdown for readability (bold, italic, bullet points)
-- Keep the total summary under 500 words
+- Keep the total summary under 220 words
 - Use direct, active voice — avoid passive constructions
 """
 
@@ -65,15 +65,11 @@ async def summarizer_node(state: dict) -> dict:
         logger.warning("[Summarizer] No insights to summarize")
         return {
             "summary": "No insights were available to generate a summary.",
-            "logs": [
-                f"[{timestamp}] ⚠️ Summarizer: No insights available"
-            ],
+            "logs": [f"[{timestamp}] ⚠️ Summarizer: No insights available"],
         }
 
     # Format insights for the prompt
-    insights_text = "\n".join(
-        f"  {i + 1}. {insight}" for i, insight in enumerate(insights)
-    )
+    insights_text = "\n".join(f"  {i + 1}. {insight}" for i, insight in enumerate(insights))
 
     prompt = f"""Create an executive summary for the following research topic and insights.
 
@@ -89,16 +85,15 @@ Generate a well-structured executive summary in Markdown format."""
             prompt=prompt,
             model=model,
             system_prompt=SUMMARIZER_SYSTEM_PROMPT,
-            temperature=0.3,
+            temperature=state.get("temperature", 0.3),
             max_tokens=2048,
         )
 
         if not summary or not summary.strip():
-            summary = "Summary generation produced empty results."
+            raise ValueError("The model returned an empty summary")
 
         logger.info(
-            f"[Summarizer] Generated summary ({len(summary)} chars) "
-            f"from {len(insights)} insights"
+            f"[Summarizer] Generated summary ({len(summary)} chars) from {len(insights)} insights"
         )
 
         return {
@@ -110,21 +105,6 @@ Generate a well-structured executive summary in Markdown format."""
         }
 
     except Exception as e:
-        logger.error(f"[Summarizer] Error: {e}")
-        # Create a basic fallback summary
-        fallback = f"## Executive Summary: {user_query}\n\n"
-        fallback += "### Key Findings\n\n"
-        for insight in insights[:5]:
-            fallback += f"- {insight}\n"
-        fallback += (
-            "\n*Note: This is a fallback summary generated due to an "
-            "LLM processing error.*"
-        )
-
-        return {
-            "summary": fallback,
-            "logs": [
-                f"[{timestamp}] ⚠️ Summarizer: Error ({e}), "
-                f"generated fallback summary"
-            ],
-        }
+        raise RuntimeError(
+            "Summarizer failed. Check the configured API key, model, and provider availability."
+        ) from e

@@ -30,6 +30,7 @@ logger = logging.getLogger(__name__)
 # Memory Saver Node (inline — lightweight)
 # ──────────────────────────────────────────────
 
+
 async def memory_saver_node(state: dict) -> dict:
     """
     Memory node: persists the research session to JSON storage.
@@ -44,15 +45,19 @@ async def memory_saver_node(state: dict) -> dict:
 
     try:
         manager = MemoryManager()
+        saved_log = f"[{timestamp}] 💾 Memory: Session {session_id[:8]}... saved"
         session_data = {
             "session_id": session_id,
             "user_query": state.get("user_query", ""),
             "research_plan": state.get("research_plan", {}),
+            "selected_topics": state.get("selected_topics", []),
+            "excluded_topics": state.get("excluded_topics", []),
+            "evidence_gaps": state.get("evidence_gaps", []),
             "sources": state.get("sources", []),
             "insights": state.get("insights", []),
             "summary": state.get("summary", ""),
             "final_report": state.get("final_report", ""),
-            "logs": state.get("logs", []),
+            "logs": [*state.get("logs", []), saved_log],
             "model": state.get("model", ""),
             "created_at": timestamp,
         }
@@ -67,28 +72,18 @@ async def memory_saver_node(state: dict) -> dict:
                 "saved_at": timestamp,
                 "status": "saved",
             },
-            "logs": [
-                f"[{timestamp}] 💾 Memory: Session {session_id[:8]}... saved"
-            ],
+            "logs": [saved_log],
         }
 
     except Exception as e:
         logger.error(f"[Memory] Failed to save session: {e}")
-        return {
-            "memory": {
-                "session_id": session_id,
-                "saved_at": timestamp,
-                "status": f"error: {e}",
-            },
-            "logs": [
-                f"[{timestamp}] ❌ Memory: Failed to save session: {e}"
-            ],
-        }
+        raise RuntimeError("Report could not be saved; export is unavailable. Please retry.") from e
 
 
 # ──────────────────────────────────────────────
 # Graph Construction
 # ──────────────────────────────────────────────
+
 
 def build_research_graph() -> StateGraph:
     """
@@ -146,6 +141,9 @@ async def run_research(
     query: str,
     model: str | None = None,
     session_id: str | None = None,
+    temperature: float = 0.3,
+    selected_topics: list[str] | None = None,
+    excluded_topics: list[str] | None = None,
 ) -> dict:
     """
     Execute the full research pipeline.
@@ -167,10 +165,17 @@ async def run_research(
     if not session_id:
         session_id = str(uuid.uuid4())
 
+    from backend.config import settings
+
+    settings.validate()
+
     initial_state: ResearchState = {
         "user_query": query,
         "session_id": session_id,
         "model": model or "",
+        "temperature": temperature,
+        "selected_topics": selected_topics or [],
+        "excluded_topics": excluded_topics or [],
         "logs": [
             f"[{datetime.now(timezone.utc).isoformat()}] 🚀 Starting research: "
             f"'{query}' (session: {session_id[:8]}...)"
@@ -182,9 +187,6 @@ async def run_research(
     graph = _get_graph()
     result = await graph.ainvoke(initial_state)
 
-    logger.info(
-        f"Research pipeline completed for: '{query}' "
-        f"(session: {session_id[:8]}...)"
-    )
+    logger.info(f"Research pipeline completed for: '{query}' (session: {session_id[:8]}...)")
 
     return dict(result)

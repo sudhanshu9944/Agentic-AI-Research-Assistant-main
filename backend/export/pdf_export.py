@@ -14,7 +14,6 @@ Features:
 from __future__ import annotations
 
 import logging
-import math
 import re
 from datetime import datetime, timezone
 from pathlib import Path
@@ -31,28 +30,29 @@ logger = logging.getLogger(__name__)
 # Color Palette
 # ═══════════════════════════════════════════════════════════
 
+
 class Colors:
     """Centralized color palette for the report theme."""
 
     # Cover page gradient stops (navy → purple)
-    GRADIENT_START = (30, 30, 80)       # #1E1E50
-    GRADIENT_END = (74, 45, 122)        # #4A2D7A
+    GRADIENT_START = (30, 30, 80)  # #1E1E50
+    GRADIENT_END = (74, 45, 122)  # #4A2D7A
 
     # Section accent colors (rotate per section)
     ACCENTS = [
-        (79, 70, 229),    # Indigo
-        (20, 184, 166),   # Teal
-        (245, 158, 11),   # Amber
-        (244, 63, 94),    # Rose
-        (16, 185, 129),   # Emerald
-        (139, 92, 246),   # Violet
+        (79, 70, 229),  # Indigo
+        (20, 184, 166),  # Teal
+        (245, 158, 11),  # Amber
+        (244, 63, 94),  # Rose
+        (16, 185, 129),  # Emerald
+        (139, 92, 246),  # Violet
     ]
 
     # Stat card backgrounds
-    STAT_BG_1 = (238, 242, 255)   # Light indigo
-    STAT_BG_2 = (204, 251, 241)   # Light teal
-    STAT_BG_3 = (254, 243, 199)   # Light amber
-    STAT_BG_4 = (237, 233, 254)   # Light violet
+    STAT_BG_1 = (238, 242, 255)  # Light indigo
+    STAT_BG_2 = (204, 251, 241)  # Light teal
+    STAT_BG_3 = (254, 243, 199)  # Light amber
+    STAT_BG_4 = (237, 233, 254)  # Light violet
 
     # Text
     TITLE_WHITE = (255, 255, 255)
@@ -81,21 +81,43 @@ class Colors:
 # PDF Class
 # ═══════════════════════════════════════════════════════════
 
+
 class ResearchReportPDF(FPDF):
     """Custom PDF class with premium header/footer for research reports."""
 
-    def __init__(self, title: str = "Research Report") -> None:
+    def __init__(self, title: str = "Research Report", unicode_mode: bool = False) -> None:
         super().__init__()
+        self.unicode_mode = unicode_mode
+        if unicode_mode:
+            font_dir = Path(__file__).with_name("fonts")
+            for style, suffix in (
+                ("", "Regular"),
+                ("B", "Bold"),
+                ("I", "Italic"),
+                ("BI", "BoldItalic"),
+            ):
+                self.add_font("ReportSans", style, str(font_dir / f"NotoSans-{suffix}.ttf"))
+            self.add_font("Devanagari", "", str(font_dir / "NotoSansDevanagari-Regular.ttf"))
+            self.set_fallback_fonts(["Devanagari"], exact_match=False)
+            self.set_text_shaping(True)
+        self.section_counter = 0
         self.report_title = title
         self.report_date = ""
         self.set_auto_page_break(auto=True, margin=28)
+
+    def set_font(self, family=None, style="", size=0):
+        # Preserve the original Helvetica face for ordinary reports. Unicode
+        # fonts are needed only when the report contains unsupported scripts.
+        if family == "ReportSans" and not getattr(self, "unicode_mode", False):
+            family = "Helvetica"
+        return super().set_font(family, style, size)
 
     def header(self) -> None:
         """Render the page header with title and branding."""
         if self.page_no() == 1:
             return  # Cover page has its own layout
 
-        self.set_font("Helvetica", "", 8)
+        self.set_font("ReportSans", "", 8)
         self.set_text_color(*Colors.HEADER_TEXT)
 
         # Left: report title (truncated)
@@ -105,10 +127,9 @@ class ResearchReportPDF(FPDF):
         self.cell(95, 6, _clean(title_display), align="L")
 
         # Right: branding
-        self.set_font("Helvetica", "B", 8)
+        self.set_font("ReportSans", "B", 8)
         self.set_text_color(*Colors.ACCENTS[0])
-        self.cell(95, 6, "AI Research Assistant", align="R",
-                  new_x="LMARGIN", new_y="NEXT")
+        self.cell(95, 6, "AI Research Assistant", align="R", new_x="LMARGIN", new_y="NEXT")
 
         # Separator line
         self.set_draw_color(*Colors.DIVIDER)
@@ -124,7 +145,7 @@ class ResearchReportPDF(FPDF):
         self.line(10, self.get_y(), 200, self.get_y())
         self.ln(3)
 
-        self.set_font("Helvetica", "", 7)
+        self.set_font("ReportSans", "", 7)
         self.set_text_color(*Colors.FOOTER_TEXT)
         self.cell(95, 5, self.report_date, align="L")
         self.cell(95, 5, f"Page {self.page_no()} of {{nb}}", align="R")
@@ -134,15 +155,22 @@ class ResearchReportPDF(FPDF):
 # Text Utilities
 # ═══════════════════════════════════════════════════════════
 
+
 def _clean(text: str) -> str:
     """Clean text for PDF rendering — replace unsupported unicode."""
     replacements = {
-        "\u2018": "'", "\u2019": "'",
-        "\u201c": '"', "\u201d": '"',
-        "\u2013": "-", "\u2014": "--",
+        "\u2018": "'",
+        "\u2019": "'",
+        "\u201c": '"',
+        "\u201d": '"',
+        "\u2013": "-",
+        "\u2014": "--",
         "\u2026": "...",
         "\u2022": "*",
         "\u00a0": " ",
+        "\u202f": " ",
+        "\u3010": "[",
+        "\u3011": "]",
         "\u2192": "->",
         "\u2190": "<-",
         "\u2715": "x",
@@ -152,12 +180,12 @@ def _clean(text: str) -> str:
     }
     for char, replacement in replacements.items():
         text = text.replace(char, replacement)
-    return text.encode("latin-1", errors="replace").decode("latin-1")
+    return text
 
 
-def _draw_rounded_rect(pdf: FPDF, x: float, y: float,
-                        w: float, h: float, r: float,
-                        style: str = "F") -> None:
+def _draw_rounded_rect(
+    pdf: FPDF, x: float, y: float, w: float, h: float, r: float, style: str = "F"
+) -> None:
     """Draw a rectangle with rounded corners.
 
     Parameters
@@ -195,8 +223,7 @@ def _draw_rounded_rect(pdf: FPDF, x: float, y: float,
         pdf.ellipse(x + w - 2 * r, y + h - 2 * r, 2 * r, 2 * r, "F")
 
 
-def _draw_circle(pdf: FPDF, cx: float, cy: float, radius: float,
-                  style: str = "F") -> None:
+def _draw_circle(pdf: FPDF, cx: float, cy: float, radius: float, style: str = "F") -> None:
     """Draw a circle centered at (cx, cy)."""
     pdf.ellipse(cx - radius, cy - radius, radius * 2, radius * 2, style)
 
@@ -210,20 +237,22 @@ def _lerp_color(c1: tuple, c2: tuple, t: float) -> tuple:
 # Cover Page
 # ═══════════════════════════════════════════════════════════
 
+
 def _render_cover_page(pdf: ResearchReportPDF, session_data: dict) -> None:
     """Render the premium cover page with gradient banner and stat cards."""
 
     query = session_data.get("user_query", "Research Report")
-    created_at = session_data.get(
-        "created_at", datetime.now(timezone.utc).isoformat()
-    )
+    created_at = session_data.get("created_at", datetime.now(timezone.utc).isoformat())
     sources = session_data.get("sources", [])
     report_text = session_data.get("final_report", "")
     word_count = len(report_text.split())
     insights = session_data.get("insights", [])
 
     # ── Gradient Banner ──
-    banner_h = 90
+    title_size = 28 if len(query) <= 120 else 16
+    pdf.set_font("ReportSans", "B", title_size)
+    title_lines = pdf.multi_cell(190, 9, _clean(query), dry_run=True, output="LINES")
+    banner_h = max(90, 45 + len(title_lines) * 9)
     steps = 40
     strip_h = banner_h / steps
 
@@ -235,15 +264,14 @@ def _render_cover_page(pdf: ResearchReportPDF, session_data: dict) -> None:
 
     # Title on banner
     pdf.set_y(25)
-    pdf.set_font("Helvetica", "B", 28)
+    pdf.set_font("ReportSans", "B", title_size)
     pdf.set_text_color(*Colors.TITLE_WHITE)
-    pdf.multi_cell(0, 13, _clean(query), align="C")
+    pdf.multi_cell(0, 9, _clean(query), align="C", new_x="LMARGIN", new_y="NEXT")
 
     # Subtitle
-    pdf.set_font("Helvetica", "", 12)
+    pdf.set_font("ReportSans", "", 12)
     pdf.set_text_color(200, 200, 230)
-    pdf.cell(0, 8, "AI Research Report", align="C",
-             new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 8, "AI Research Report", align="C", new_x="LMARGIN", new_y="NEXT")
 
     # ── Stat Cards (2x2 grid) ──
     pdf.set_y(banner_h + 12)
@@ -275,13 +303,13 @@ def _render_cover_page(pdf: ResearchReportPDF, session_data: dict) -> None:
 
         # Value
         pdf.set_xy(x, y + 6)
-        pdf.set_font("Helvetica", "B", 14)
+        pdf.set_font("ReportSans", "B", 14)
         pdf.set_text_color(*accent)
         pdf.cell(card_w, 8, _clean(value), align="C")
 
         # Label
         pdf.set_xy(x, y + 16)
-        pdf.set_font("Helvetica", "", 7)
+        pdf.set_font("ReportSans", "", 7)
         pdf.set_text_color(*Colors.BODY_LIGHT)
         pdf.cell(card_w, 6, _clean(label), align="C")
 
@@ -295,26 +323,23 @@ def _render_cover_page(pdf: ResearchReportPDF, session_data: dict) -> None:
     pdf.line(60, pdf.get_y(), 150, pdf.get_y())
     pdf.ln(8)
 
-    pdf.set_font("Helvetica", "", 9)
+    pdf.set_font("ReportSans", "", 9)
     pdf.set_text_color(*Colors.BODY_LIGHT)
-    pdf.cell(0, 6, f"Session ID: {session_id}", align="C",
-             new_x="LMARGIN", new_y="NEXT")
-    pdf.cell(0, 6, f"Generated: {created_at}", align="C",
-             new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 6, f"Session ID: {session_id}", align="C", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 6, f"Generated: {created_at}", align="C", new_x="LMARGIN", new_y="NEXT")
 
     # ── Table of Contents placeholder ──
     pdf.ln(15)
-    pdf.set_font("Helvetica", "B", 14)
+    pdf.set_font("ReportSans", "B", 14)
     pdf.set_text_color(*Colors.HEADING_DARK)
-    pdf.cell(0, 8, "Report Contents", align="C",
-             new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 8, "Report Contents", align="C", new_x="LMARGIN", new_y="NEXT")
     pdf.ln(4)
 
     # Extract section headings from the report
     sections = re.findall(r"^##\s+(.+)$", report_text, re.MULTILINE)
     if sections:
-        for i, section in enumerate(sections[:12], 1):
-            pdf.set_font("Helvetica", "", 10)
+        for i, section in enumerate(sections[:8], 1):
+            pdf.set_font("ReportSans", "", 10)
             pdf.set_text_color(*Colors.BODY_TEXT)
 
             # Section number circle
@@ -322,14 +347,14 @@ def _render_cover_page(pdf: ResearchReportPDF, session_data: dict) -> None:
             cy = pdf.get_y() + 3
             pdf.set_fill_color(*Colors.ACCENTS[i % len(Colors.ACCENTS)])
             _draw_circle(pdf, cx, cy, 3, "F")
-            pdf.set_font("Helvetica", "B", 6)
+            pdf.set_font("ReportSans", "B", 6)
             pdf.set_text_color(*Colors.TITLE_WHITE)
             pdf.set_xy(cx - 3, cy - 2.5)
             pdf.cell(6, 5, str(i), align="C")
 
             # Section title
             pdf.set_xy(72, cy - 3)
-            pdf.set_font("Helvetica", "", 10)
+            pdf.set_font("ReportSans", "", 10)
             pdf.set_text_color(*Colors.BODY_TEXT)
             pdf.cell(0, 6, _clean(section[:60]))
             pdf.ln(8)
@@ -338,6 +363,7 @@ def _render_cover_page(pdf: ResearchReportPDF, session_data: dict) -> None:
 # ═══════════════════════════════════════════════════════════
 # Markdown Parser
 # ═══════════════════════════════════════════════════════════
+
 
 def _parse_markdown_blocks(text: str) -> list[dict]:
     """Parse markdown text into structured blocks.
@@ -389,11 +415,13 @@ def _parse_markdown_blocks(text: str) -> list[dict]:
         header_match = re.match(r"^(#{1,6})\s+(.+)$", stripped)
         if header_match:
             level = len(header_match.group(1))
-            blocks.append({
-                "type": "heading",
-                "level": level,
-                "content": header_match.group(2).strip(),
-            })
+            blocks.append(
+                {
+                    "type": "heading",
+                    "level": level,
+                    "content": header_match.group(2).strip(),
+                }
+            )
             i += 1
             continue
 
@@ -403,10 +431,12 @@ def _parse_markdown_blocks(text: str) -> list[dict]:
             while i < len(lines) and lines[i].strip().startswith("> "):
                 quote_lines.append(lines[i].strip()[2:])
                 i += 1
-            blocks.append({
-                "type": "blockquote",
-                "content": " ".join(quote_lines),
-            })
+            blocks.append(
+                {
+                    "type": "blockquote",
+                    "content": " ".join(quote_lines),
+                }
+            )
             continue
 
         # Sub-bullet (indented)
@@ -425,11 +455,13 @@ def _parse_markdown_blocks(text: str) -> list[dict]:
         # Numbered list
         num_match = re.match(r"^(\d+)\.\s+(.*)", stripped)
         if num_match:
-            blocks.append({
-                "type": "numbered",
-                "num": num_match.group(1),
-                "content": num_match.group(2).strip(),
-            })
+            blocks.append(
+                {
+                    "type": "numbered",
+                    "num": num_match.group(1),
+                    "content": num_match.group(2).strip(),
+                }
+            )
             i += 1
             continue
 
@@ -444,8 +476,8 @@ def _parse_markdown_blocks(text: str) -> list[dict]:
 # Inline Text Rendering
 # ═══════════════════════════════════════════════════════════
 
-def _render_rich_text(pdf: FPDF, text: str, max_w: float = 0,
-                       line_h: float = 5) -> None:
+
+def _render_rich_text(pdf: FPDF, text: str, max_w: float = 0, line_h: float = 5) -> None:
     """Render text with inline bold, italic, and link formatting.
 
     Parses **bold**, *italic*, and [text](url) markers and renders
@@ -459,21 +491,25 @@ def _render_rich_text(pdf: FPDF, text: str, max_w: float = 0,
         if not clean_text:
             continue
 
+        # A fallback font can remain active in the PDF text stream after write().
+        # Re-select the intended face between spans (including literal citations).
+        pdf.set_font("ReportSans", "BI", 10)
+
         # Set font style
         if style == "bold":
-            pdf.set_font("Helvetica", "B", 10)
+            pdf.set_font("ReportSans", "B", 10)
             pdf.set_text_color(*Colors.BODY_TEXT)
         elif style == "italic":
-            pdf.set_font("Helvetica", "I", 10)
+            pdf.set_font("ReportSans", "I", 10)
             pdf.set_text_color(*Colors.BODY_LIGHT)
         elif style == "bold_italic":
-            pdf.set_font("Helvetica", "BI", 10)
+            pdf.set_font("ReportSans", "BI", 10)
             pdf.set_text_color(*Colors.BODY_TEXT)
         elif style == "link":
-            pdf.set_font("Helvetica", "U", 10)
+            pdf.set_font("ReportSans", "U", 10)
             pdf.set_text_color(*Colors.LINK_BLUE)
         else:
-            pdf.set_font("Helvetica", "", 10)
+            pdf.set_font("ReportSans", "", 10)
             pdf.set_text_color(*Colors.BODY_TEXT)
 
         if url:
@@ -482,7 +518,7 @@ def _render_rich_text(pdf: FPDF, text: str, max_w: float = 0,
             pdf.write(line_h, clean_text)
 
     # Reset
-    pdf.set_font("Helvetica", "", 10)
+    pdf.set_font("ReportSans", "", 10)
     pdf.set_text_color(*Colors.BODY_TEXT)
 
 
@@ -494,11 +530,11 @@ def _parse_inline_spans(text: str) -> list[tuple[str, str, Optional[str]]]:
     spans = []
     # Pattern for bold_italic, bold, italic, links, plain text
     pattern = re.compile(
-        r"\*\*\*(.+?)\*\*\*"        # ***bold italic***
-        r"|\*\*(.+?)\*\*"           # **bold**
-        r"|\*(.+?)\*"               # *italic*
-        r"|\[([^\]]+)\]\(([^)]+)\)" # [text](url)
-        r"|([^*\[]+)"              # plain text
+        r"\*\*\*(.+?)\*\*\*"  # ***bold italic***
+        r"|\*\*(.+?)\*\*"  # **bold**
+        r"|\*(.+?)\*"  # *italic*
+        r"|\[([^\]]+)\]\(([^)]+)\)"  # [text](url)
+        r"|([^*\[]+|[\[*])"  # plain text
     )
 
     for m in pattern.finditer(text):
@@ -513,32 +549,36 @@ def _parse_inline_spans(text: str) -> list[tuple[str, str, Optional[str]]]:
         elif m.group(6):
             spans.append(("normal", m.group(6), None))
 
-    return spans
+    merged = []
+    for style, content, url in spans:
+        if merged and merged[-1][0] == style and merged[-1][2] == url:
+            previous = merged.pop()
+            merged.append((style, previous[1] + content, url))
+        else:
+            merged.append((style, content, url))
+    return merged
 
 
 # ═══════════════════════════════════════════════════════════
 # Block Renderers
 # ═══════════════════════════════════════════════════════════
 
-_section_counter = 0
-
 
 def _render_heading(pdf: FPDF, text: str, level: int) -> None:
     """Render a heading with colored accent card for level 2."""
-    global _section_counter
 
     if level == 1:
         # Large title heading
         pdf.ln(6)
-        pdf.set_font("Helvetica", "B", 20)
+        pdf.set_font("ReportSans", "B", 20)
         pdf.set_text_color(*Colors.HEADING_DARK)
-        pdf.multi_cell(0, 10, _clean(text))
+        pdf.multi_cell(0, 10, _clean(text), new_x="LMARGIN", new_y="NEXT")
         pdf.ln(4)
         return
 
     if level == 2:
-        _section_counter += 1
-        accent = Colors.ACCENTS[(_section_counter - 1) % len(Colors.ACCENTS)]
+        pdf.section_counter += 1
+        accent = Colors.ACCENTS[(pdf.section_counter - 1) % len(Colors.ACCENTS)]
 
         # Ensure enough space for the card
         if pdf.get_y() > 250:
@@ -560,32 +600,34 @@ def _render_heading(pdf: FPDF, text: str, level: int) -> None:
         badge_cy = card_y + 8
         pdf.set_fill_color(*accent)
         _draw_circle(pdf, badge_cx, badge_cy, 5, "F")
-        pdf.set_font("Helvetica", "B", 8)
+        pdf.set_font("ReportSans", "B", 8)
         pdf.set_text_color(*Colors.TITLE_WHITE)
         pdf.set_xy(badge_cx - 4, badge_cy - 3.5)
-        pdf.cell(8, 7, str(_section_counter), align="C")
+        pdf.cell(8, 7, str(pdf.section_counter), align="C")
 
         # Heading text
         pdf.set_xy(28, card_y + 2)
-        pdf.set_font("Helvetica", "B", 14)
+        pdf.set_font("ReportSans", "B", 14)
         pdf.set_text_color(*Colors.HEADING_DARK)
-        pdf.cell(0, 12, _clean(text))
+        pdf.multi_cell(0, 6, _clean(text), new_x="LMARGIN", new_y="NEXT")
 
-        pdf.set_y(card_y + 20)
+        pdf.set_y(max(pdf.get_y() + 4, card_y + 20))
         return
 
     # Levels 3-6
     sizes = {3: 12, 4: 11, 5: 10, 6: 10}
     size = sizes.get(level, 10)
     pdf.ln(4)
-    pdf.set_font("Helvetica", "B", size)
+    pdf.set_font("ReportSans", "B", size)
     pdf.set_text_color(*Colors.HEADING_DARK)
-    pdf.multi_cell(0, size * 0.55, _clean(text))
+    pdf.multi_cell(0, size * 0.55, _clean(text), new_x="LMARGIN", new_y="NEXT")
     pdf.ln(2)
 
 
 def _render_bullet(pdf: FPDF, text: str, accent: tuple) -> None:
     """Render a bullet point with a colored circle marker."""
+    if pdf.will_page_break(12):
+        pdf.add_page()
     x_start = pdf.get_x()
     y = pdf.get_y()
 
@@ -598,10 +640,10 @@ def _render_bullet(pdf: FPDF, text: str, accent: tuple) -> None:
     indent_x = x_start + 19
     pdf.set_left_margin(indent_x)
     pdf.set_xy(indent_x, y)
-    
+
     _render_rich_text(pdf, text, line_h=5)
     pdf.ln(6)
-    
+
     # Restore margin and cursor
     pdf.set_left_margin(old_margin)
     pdf.set_x(old_margin)
@@ -609,6 +651,8 @@ def _render_bullet(pdf: FPDF, text: str, accent: tuple) -> None:
 
 def _render_sub_bullet(pdf: FPDF, text: str, accent: tuple) -> None:
     """Render a sub-bullet with a hollow circle marker."""
+    if pdf.will_page_break(12):
+        pdf.add_page()
     x_start = pdf.get_x()
     y = pdf.get_y()
 
@@ -622,12 +666,12 @@ def _render_sub_bullet(pdf: FPDF, text: str, accent: tuple) -> None:
     indent_x = x_start + 27
     pdf.set_left_margin(indent_x)
     pdf.set_xy(indent_x, y)
-    
-    pdf.set_font("Helvetica", "", 9)
+
+    pdf.set_font("ReportSans", "", 9)
     pdf.set_text_color(*Colors.BODY_LIGHT)
     _render_rich_text(pdf, text, line_h=4.5)
     pdf.ln(5)
-    
+
     # Restore margin and cursor
     pdf.set_left_margin(old_margin)
     pdf.set_x(old_margin)
@@ -635,13 +679,15 @@ def _render_sub_bullet(pdf: FPDF, text: str, accent: tuple) -> None:
 
 def _render_numbered(pdf: FPDF, num: str, text: str, accent: tuple) -> None:
     """Render a numbered list item with a colored badge."""
+    if pdf.will_page_break(12):
+        pdf.add_page()
     x_start = pdf.get_x()
     y = pdf.get_y()
 
     # Number badge
     pdf.set_fill_color(*accent)
     _draw_circle(pdf, x_start + 14, y + 2.5, 3.5, "F")
-    pdf.set_font("Helvetica", "B", 7)
+    pdf.set_font("ReportSans", "B", 7)
     pdf.set_text_color(*Colors.TITLE_WHITE)
     pdf.set_xy(x_start + 10.5, y)
     pdf.cell(7, 5, _clean(num), align="C")
@@ -651,10 +697,10 @@ def _render_numbered(pdf: FPDF, num: str, text: str, accent: tuple) -> None:
     indent_x = x_start + 21
     pdf.set_left_margin(indent_x)
     pdf.set_xy(indent_x, y)
-    
+
     _render_rich_text(pdf, text, line_h=5)
     pdf.ln(6)
-    
+
     # Restore margin and cursor
     pdf.set_left_margin(old_margin)
     pdf.set_x(old_margin)
@@ -662,7 +708,7 @@ def _render_numbered(pdf: FPDF, num: str, text: str, accent: tuple) -> None:
 
 def _render_paragraph(pdf: FPDF, text: str) -> None:
     """Render a paragraph with inline formatting support."""
-    pdf.set_font("Helvetica", "", 10)
+    pdf.set_font("ReportSans", "", 10)
     pdf.set_text_color(*Colors.BODY_TEXT)
     pdf.set_x(pdf.l_margin)
     _render_rich_text(pdf, text, line_h=5)
@@ -670,77 +716,29 @@ def _render_paragraph(pdf: FPDF, text: str) -> None:
 
 
 def _render_blockquote(pdf: FPDF, text: str) -> None:
-    """Render a blockquote with gray background and accent bar."""
-    clean_text = _clean(text)
-
-    # Calculate height using dry run
-    pdf.set_font("Helvetica", "I", 10)
-    lines = pdf.multi_cell(
-        w=170, h=5, text=clean_text,
-        dry_run=True, output="LINES",
-    )
-    block_h = max(len(lines) * 5 + 8, 16)
-
-    if pdf.get_y() + block_h > 270:
-        pdf.add_page()
-
-    y = pdf.get_y()
-
-    # Background
+    """Let fpdf split a long quote across pages instead of drawing one huge box."""
+    pdf.set_x(pdf.l_margin)
+    pdf.set_font("ReportSans", "I", 10)
     pdf.set_fill_color(*Colors.BLOCKQUOTE_BG)
-    _draw_rounded_rect(pdf, 14, y, 182, block_h, 3, "F")
-
-    # Left accent bar
-    accent = Colors.ACCENTS[_section_counter % len(Colors.ACCENTS)]
-    pdf.set_fill_color(*accent)
-    pdf.rect(14, y, 3, block_h, "F")
-
-    # Quote text starts at X=21. Set left margin to align wrapped text.
-    old_margin = pdf.l_margin
-    pdf.set_left_margin(21)
-    pdf.set_xy(21, y + 4)
-    pdf.set_font("Helvetica", "I", 10)
-    pdf.set_text_color(*Colors.BODY_LIGHT)
-    
-    # Render with inline formatting inside blockquote
-    _render_rich_text(pdf, text, line_h=5)
-    
-    # Restore margin and cursor
-    pdf.set_left_margin(old_margin)
-    pdf.set_x(old_margin)
-    pdf.set_y(y + block_h + 4)
+    pdf.set_text_color(*Colors.BODY_TEXT)
+    plain_text = "".join(span[1] for span in _parse_inline_spans(text))
+    pdf.multi_cell(0, 6, _clean(plain_text), fill=True, new_x="LMARGIN", new_y="NEXT")
+    pdf.ln(4)
 
 
 def _render_code_block(pdf: FPDF, text: str) -> None:
-    """Render a fenced code block with dark background."""
-    clean_text = _clean(text)
-
-    pdf.set_font("Courier", "", 8)
-    lines = clean_text.split("\n")
-    block_h = max(len(lines) * 4.5 + 10, 14)
-
-    if pdf.get_y() + block_h > 270:
+    """Wrap long code lines and split the block at the actual page boundary."""
+    if pdf.will_page_break(min(20, 4.5 * len(text.split("\n")))):
         pdf.add_page()
-
-    y = pdf.get_y()
-
-    # Dark background
+    pdf.set_font("ReportSans" if pdf.unicode_mode else "Courier", "", 8)
     pdf.set_fill_color(*Colors.CODE_BG)
-    _draw_rounded_rect(pdf, 14, y, 182, block_h, 3, "F")
-
-    # Code text
-    pdf.set_xy(18, y + 5)
-    pdf.set_font("Courier", "", 8)
     pdf.set_text_color(*Colors.CODE_TEXT)
-
-    for line in lines:
-        pdf.set_x(18)
-        pdf.cell(0, 4.5, _clean(line))
-        pdf.ln(4.5)
-
-    pdf.set_y(y + block_h + 4)
-
-    # Reset text color
+    for line in text.split("\n"):
+        pdf.set_x(pdf.l_margin)
+        pdf.multi_cell(
+            0, 4.5, _clean(line) or " ", fill=True, new_x="LMARGIN", new_y="NEXT", wrapmode="CHAR"
+        )
+    pdf.ln(4)
     pdf.set_text_color(*Colors.BODY_TEXT)
 
 
@@ -752,7 +750,9 @@ def _render_table(pdf: FPDF, table_lines: list[str]) -> None:
     # Parse cells
     rows = []
     for line in table_lines:
-        cells = [c.strip() for c in line.strip("|").split("|")]
+        cells = [
+            c.strip().replace(r"\|", "|") for c in re.split(r"(?<!\\)\|", line.strip().strip("|"))
+        ]
         # Skip separator rows (e.g., |---|---|)
         if cells and all(re.match(r"^[-:]+$", c) for c in cells):
             continue
@@ -764,15 +764,30 @@ def _render_table(pdf: FPDF, table_lines: list[str]) -> None:
 
     header = rows[0]
     data_rows = rows[1:]
-    num_cols = len(header)
+    num_cols = max(len(row) for row in rows)
+    header = header + [f"Column {i + 1}" for i in range(len(header), num_cols)]
 
     if num_cols == 0:
+        return
+
+    pdf.set_font("ReportSans", "", 9)
+    pdf.set_text_color(*Colors.BODY_TEXT)
+
+    # A native table row cannot exceed a page. Preserve long cell content in
+    # a flowing labeled layout instead of crashing or truncating the report.
+    if any(len(cell) > 1000 for row in rows for cell in row):
+        for row_index, data_row in enumerate(data_rows, 1):
+            _render_heading(pdf, f"Table entry {row_index}", 3)
+            for label, cell in zip(header, data_row):
+                _render_paragraph(pdf, f"{label}: {cell}")
         return
 
     from fpdf.fonts import FontFace
 
     # Define FontFace styles for header and alternate data rows
-    header_style = FontFace(emphasis="B", color=Colors.TABLE_HEADER_TEXT, fill_color=Colors.TABLE_HEADER_BG)
+    header_style = FontFace(
+        emphasis="B", color=Colors.TABLE_HEADER_TEXT, fill_color=Colors.TABLE_HEADER_BG
+    )
     zebra_style = FontFace(fill_color=Colors.TABLE_ZEBRA_LIGHT)
     white_style = FontFace(fill_color=Colors.TABLE_ZEBRA_WHITE)
 
@@ -788,11 +803,11 @@ def _render_table(pdf: FPDF, table_lines: list[str]) -> None:
         for idx, data_row in enumerate(data_rows):
             row_style = zebra_style if idx % 2 == 0 else white_style
             row = table.row()
-            
+
             # Handle row matching column length to avoid index error
             for cell in data_row[:num_cols]:
                 row.cell(_clean(cell), style=row_style, align="C")
-            
+
             # Fill missing cells if any
             for _ in range(num_cols - len(data_row)):
                 row.cell("", style=row_style, align="C")
@@ -813,96 +828,51 @@ def _render_hr(pdf: FPDF) -> None:
 # Sources Appendix
 # ═══════════════════════════════════════════════════════════
 
+
 def _render_sources_appendix(pdf: FPDF, sources: list[dict]) -> None:
-    """Render a styled sources/references appendix page."""
+    """Render complete source evidence with automatic wrapping and page breaks."""
     if not sources:
         return
-
     pdf.add_page()
-
-    # Section heading
-    accent = Colors.ACCENTS[0]
-    pdf.set_fill_color(*Colors.CARD_BG)
-    _draw_rounded_rect(pdf, 10, pdf.get_y(), 190, 16, 3, "F")
-    pdf.set_fill_color(*accent)
-    pdf.rect(10, pdf.get_y(), 3, 16, "F")
-
-    pdf.set_xy(16, pdf.get_y() + 2)
-    pdf.set_font("Helvetica", "B", 14)
-    pdf.set_text_color(*Colors.HEADING_DARK)
-    pdf.cell(0, 12, "References & Sources")
-    pdf.ln(22)
-
+    _render_heading(pdf, "References & Sources", 2)
     for idx, source in enumerate(sources, 1):
-        title = source.get("title", f"Source {idx}")
-        url = source.get("url", "")
-        snippet = source.get("snippet", "")
-        src_type = source.get("source", "web")
-
-        # Alternating background
-        if idx % 2 == 1:
-            y = pdf.get_y()
-            pdf.set_fill_color(*Colors.TABLE_ZEBRA_LIGHT)
-            pdf.rect(12, y, 186, 20, "F")
-
-        # Check page space
-        if pdf.get_y() > 260:
+        if pdf.will_page_break(24):
             pdf.add_page()
-
-        y = pdf.get_y()
-
-        # Number badge
-        badge_accent = Colors.ACCENTS[(idx - 1) % len(Colors.ACCENTS)]
-        pdf.set_fill_color(*badge_accent)
-        _draw_circle(pdf, 18, y + 4, 4, "F")
-        pdf.set_font("Helvetica", "B", 7)
-        pdf.set_text_color(*Colors.TITLE_WHITE)
-        pdf.set_xy(14, y + 1)
-        pdf.cell(8, 6, str(idx), align="C")
-
-        # Title
-        pdf.set_xy(26, y)
-        pdf.set_font("Helvetica", "B", 9)
+        pdf.set_x(pdf.l_margin)
+        pdf.set_font("ReportSans", "B", 10)
         pdf.set_text_color(*Colors.BODY_TEXT)
-        pdf.cell(0, 5, _clean(title[:80]))
-
-        # URL
-        pdf.set_xy(26, y + 5)
-        pdf.set_font("Helvetica", "", 7)
-        pdf.set_text_color(*Colors.LINK_BLUE)
-        display_url = url[:90] + "..." if len(url) > 90 else url
+        pdf.multi_cell(
+            0, 6, _clean(f"[{idx}] {source.get('title', 'Source')}"), new_x="LMARGIN", new_y="NEXT"
+        )
+        url = source.get("url", "")
         if url:
-            pdf.cell(0, 4, _clean(display_url), link=url)
-        pdf.ln()
-
-        # Snippet
+            pdf.set_font("ReportSans", "", 8)
+            pdf.set_text_color(*Colors.LINK_BLUE)
+            pdf.multi_cell(
+                0, 5, _clean(url), link=url, wrapmode="CHAR", new_x="LMARGIN", new_y="NEXT"
+            )
+        snippet = source.get("snippet", "")
         if snippet:
-            old_margin = pdf.l_margin
-            pdf.set_left_margin(26)
-            pdf.set_xy(26, y + 10)
-            pdf.set_font("Helvetica", "I", 7)
+            pdf.set_font("ReportSans", "", 9)
             pdf.set_text_color(*Colors.BODY_LIGHT)
-            pdf.multi_cell(165, 3.5, _clean(snippet[:200]))
-            pdf.set_left_margin(old_margin)
-            pdf.set_x(old_margin)
-
-        pdf.set_y(max(pdf.get_y(), y + 20) + 2)
+            pdf.multi_cell(0, 5, _clean(snippet), new_x="LMARGIN", new_y="NEXT")
+        pdf.ln(5)
 
 
 # ═══════════════════════════════════════════════════════════
 # Main Rendering Pipeline
 # ═══════════════════════════════════════════════════════════
 
+
 def _render_report_body(pdf: FPDF, markdown_text: str) -> None:
     """Parse markdown and render all blocks with infographic styling."""
-    global _section_counter
-    _section_counter = 0
+    pdf.section_counter = 0
 
     blocks = _parse_markdown_blocks(markdown_text)
 
     for block in blocks:
         btype = block["type"]
-        accent = Colors.ACCENTS[_section_counter % len(Colors.ACCENTS)]
+        accent = Colors.ACCENTS[pdf.section_counter % len(Colors.ACCENTS)]
 
         if btype == "heading":
             _render_heading(pdf, block["content"], block["level"])
@@ -928,6 +898,7 @@ def _render_report_body(pdf: FPDF, markdown_text: str) -> None:
 # Public API (unchanged signatures)
 # ═══════════════════════════════════════════════════════════
 
+
 def export_pdf(
     session_data: dict,
     output_dir: Optional[Path] = None,
@@ -952,17 +923,13 @@ def export_pdf(
 
     session_id = session_data.get("session_id", "unknown")
     query = session_data.get("user_query", "Research")
-    report = session_data.get("final_report", "No report available.")
-    created_at = session_data.get(
-        "created_at", datetime.now(timezone.utc).isoformat()
-    )
-    sources = session_data.get("sources", [])
 
     # Create filename
-    safe_query = "".join(
-        c if c.isalnum() or c in (" ", "-", "_") else "_"
-        for c in query[:50]
-    ).strip().replace(" ", "_")
+    safe_query = (
+        "".join(c if c.isalnum() or c in (" ", "-", "_") else "_" for c in query[:50])
+        .strip()
+        .replace(" ", "_")
+    )
 
     filename = f"{safe_query}_{session_id[:8]}.pdf"
     filepath = output_dir / filename
@@ -1000,12 +967,15 @@ def _build_pdf(session_data: dict) -> ResearchReportPDF:
     """Build the complete PDF document from session data."""
     query = session_data.get("user_query", "Research")
     report = session_data.get("final_report", "No report available.")
-    created_at = session_data.get(
-        "created_at", datetime.now(timezone.utc).isoformat()
-    )
+    created_at = session_data.get("created_at", datetime.now(timezone.utc).isoformat())
     sources = session_data.get("sources", [])
 
-    pdf = ResearchReportPDF(title=_clean(query))
+    rendered_values = [query, report, created_at, session_data.get("session_id", "")]
+    rendered_values.extend(
+        str(source.get(field, "")) for source in sources for field in ("title", "url", "snippet")
+    )
+    needs_unicode = any(ord(char) > 255 for value in rendered_values for char in _clean(str(value)))
+    pdf = ResearchReportPDF(title=_clean(query), unicode_mode=needs_unicode)
     pdf.report_date = f"Generated: {created_at}"
     pdf.alias_nb_pages()
 

@@ -40,7 +40,7 @@ GUIDELINES FOR SEARCH QUERIES:
 - Make queries specific and keyword-rich (NOT vague questions)
 - Include a mix of:
   * Definitional queries: "what is [topic] definition explained"
-  * Current state: "[topic] 2024 2025 current state statistics"
+  * Current state: "[topic] current state statistics for the current year"
   * Key players: "[topic] leading companies organizations"
   * Applications: "[topic] real-world applications use cases"
   * Challenges: "[topic] challenges problems limitations"
@@ -73,11 +73,25 @@ async def planner_node(state: dict) -> dict:
     model = state.get("model")
     timestamp = datetime.now(timezone.utc).isoformat()
 
+    selected = list(dict.fromkeys(state.get("selected_topics", [])))
+    if selected:
+        return {
+            "research_plan": {
+                "objectives": [f"Investigate {topic}" for topic in selected],
+                "sub_topics": selected,
+                "search_queries": [f"{user_query} {topic}" for topic in selected],
+            },
+            "logs": [
+                f"[{timestamp}] Planner: Using {len(selected)} user-approved topics; unchecked topics excluded from search scope."
+            ],
+        }
+
     logger.info(f"[Planner] Starting planning for: '{user_query}'")
 
     prompt = f"""Create a detailed research plan for the following topic:
 
 TOPIC: {user_query}
+CURRENT DATE: {timestamp[:10]}
 
 Produce a structured JSON research plan."""
 
@@ -86,7 +100,8 @@ Produce a structured JSON research plan."""
             prompt=prompt,
             model=model,
             system_prompt=PLANNER_SYSTEM_PROMPT,
-            temperature=0.2,
+            temperature=state.get("temperature", 0.2),
+            max_tokens=1024,
         )
 
         # Parse the JSON response
@@ -95,17 +110,18 @@ Produce a structured JSON research plan."""
         if cleaned.startswith("```"):
             # Remove code fence markers
             lines = cleaned.split("\n")
-            cleaned = "\n".join(
-                line for line in lines
-                if not line.strip().startswith("```")
-            )
+            cleaned = "\n".join(line for line in lines if not line.strip().startswith("```"))
 
         research_plan = json.loads(cleaned)
 
+        if not isinstance(research_plan, dict):
+            raise ValueError("Research plan must be a JSON object")
         # Validate required keys
         for key in ("objectives", "sub_topics", "search_queries"):
-            if key not in research_plan:
-                research_plan[key] = []
+            value = research_plan.get(key, [])
+            if not isinstance(value, list) or any(not isinstance(item, str) for item in value):
+                raise ValueError(f"{key} must be a list of strings")
+            research_plan[key] = [item.strip() for item in value if item.strip()][:12]
 
         logger.info(
             f"[Planner] Plan created: "
@@ -125,38 +141,11 @@ Produce a structured JSON research plan."""
         }
 
     except json.JSONDecodeError as e:
-        logger.error(f"[Planner] Failed to parse LLM response as JSON: {e}")
-        # Create a fallback plan
-        fallback_plan = {
-            "objectives": [f"Research and understand {user_query}"],
-            "sub_topics": [user_query],
-            "search_queries": [
-                user_query,
-                f"{user_query} overview",
-                f"{user_query} recent developments",
-                f"{user_query} applications",
-                f"{user_query} challenges",
-            ],
-        }
-        return {
-            "research_plan": fallback_plan,
-            "logs": [
-                f"[{timestamp}] ⚠️ Planner: LLM response was not valid JSON. "
-                f"Using fallback plan with basic queries."
-            ],
-        }
+        raise RuntimeError(
+            "Planner returned invalid JSON. Please retry the topic recommendations."
+        ) from e
 
     except Exception as e:
-        logger.error(f"[Planner] Unexpected error: {e}")
-        fallback_plan = {
-            "objectives": [f"Research {user_query}"],
-            "sub_topics": [user_query],
-            "search_queries": [user_query, f"what is {user_query}"],
-        }
-        return {
-            "research_plan": fallback_plan,
-            "logs": [
-                f"[{timestamp}] ❌ Planner: Error occurred ({e}). "
-                f"Using minimal fallback plan."
-            ],
-        }
+        raise RuntimeError(
+            "Planner failed. Check the configured API key, model, and provider availability."
+        ) from e

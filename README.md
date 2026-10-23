@@ -1,246 +1,113 @@
-# 🔬 Agentic AI Research Assistant
+# Research.AI
 
-A production-ready, multi-agent research assistant powered by **LangGraph**, **FastAPI**, and **React + Vite**. Enter any research topic and the system will autonomously plan, search, analyze, summarize, and generate a comprehensive report with citations.
+A research workspace where you choose the scope, inspect source-based findings, and generate a PDF when ready. Built with React, FastAPI, LangGraph and Groq.
 
-### 🌐 Live Demo
+![Light theme](docs/screenshots/workspace-light.png)
 
-[![Live Demo](https://img.shields.io/badge/Live_Demo-Open_App-00C7B7?style=for-the-badge)](https://agentic-ai-research-assistant-b83k.onrender.com/)
+<details>
+<summary>Dark theme and research preview</summary>
 
-**Live app:** [https://agentic-ai-research-assistant-b83k.onrender.com/](https://agentic-ai-research-assistant-b83k.onrender.com/)
+![Dark theme](docs/screenshots/workspace-dark.png)
+![Research preview](docs/screenshots/research-preview.png)
 
----
+</details>
 
-## ✨ Features
+## Start here
 
-### 🤖 Agentic Capabilities
-- **Multi-step reasoning** — LangGraph orchestrates a pipeline of specialized agents
-- **Tool calling** — DuckDuckGo + Wikipedia search integration
-- **Smart planning** — AI creates structured research strategies
-- **Vision reranking** — NVIDIA Nemotron reranker scores document relevance
-- **Source citation** — All findings are tracked back to their sources
-- **Memory** — JSON-based persistent session storage
+- [Local installation and daily use](docs/LOCAL_SETUP.md)
+- [API keys and configuration](docs/CONFIGURATION.md)
+- [Architecture and code map](docs/ARCHITECTURE.md)
+- [API reference](docs/API.md)
+- [Vercel frontend and backend deployment](docs/DEPLOYMENT.md)
+- [Verification and known limits](docs/VERIFICATION.md)
+- [Development conventions](CONTRIBUTING.md)
 
-### 📄 Export
-- **PDF Export** — Professional styled reports with headers, citations, and formatting
-- **Markdown Export** — Clean Markdown with YAML frontmatter
+## Run locally on Windows
 
-### 🎨 User Experience
-- **Premium React + Vite UI** — Dark theme with neon-glowing animations and modern glassmorphism
-- **Progress tracking** — Real-time pipeline step visualization
-- **Execution logs** — Color-coded log viewer
-- **History viewer** — Browse and reload past research sessions
+Install Python 3.12 and Node.js 24 LTS. Extract the ZIP, then open a terminal in the project root:
 
----
-
-## 🏗️ Architecture
-
-```
-User → Streamlit UI → FastAPI Backend → LangGraph Workflow
-                                              │
-                    ┌─────────────────────────┤
-                    ↓                         ↓
-              Planner Agent            Memory Manager
-                    ↓
-              Research Agent (DuckDuckGo + Wikipedia)
-                    ↓
-              Analysis Agent 
-                    ↓
-              Summary Agent
-                    ↓
-              Report Generator
-                    ↓
-              Final Response → Export (PDF / Markdown)
+```powershell
+py -3.12 -m venv .venv
+.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
+Copy-Item .env.example .env
 ```
 
-### LangGraph Workflow
+Open `.env` and fill in `GROQ_API_KEY`. Keep it private; do not overwrite an existing configured `.env`.
 
-```
-START → Planner → Researcher → Analyst → Summarizer → Reporter → Memory → END
-```
+Start the backend:
 
-Each node is an async function that receives the full typed state and returns a partial update.
-
----
-
-## 📁 Project Structure
-
-```
-agentic ai project/
-├── backend/
-│   ├── main.py                  # FastAPI entry point
-│   ├── config.py                # Environment configuration
-│   ├── api/routes.py            # REST API endpoints
-│   ├── schemas/
-│   │   ├── state.py             # LangGraph TypedDict state
-│   │   └── models.py            # Pydantic request/response models
-│   ├── services/
-│   │   ├── llm_service.py       # OpenRouter LLM wrapper
-│   │   └── reranker_service.py  # NVIDIA vision reranker
-│   ├── tools/search_tools.py    # DuckDuckGo + Wikipedia
-│   ├── agents/
-│   │   ├── planner.py           # Research planning
-│   │   ├── researcher.py        # Web searching
-│   │   ├── analyst.py           # Insight extraction
-│   │   ├── summarizer.py        # Executive summary
-│   │   └── reporter.py          # Report generation
-│   ├── graph/workflow.py        # LangGraph StateGraph
-│   ├── memory/memory_manager.py # JSON session storage
-│   └── export/
-│       ├── pdf_export.py        # PDF generation (fpdf2)
-│       └── markdown_export.py   # Markdown export
-├── frontend/
-│   ├── app.py                   # Streamlit main app
-│   ├── components/              # UI components
-│   └── utils/api_client.py      # Backend HTTP client
-├── tests/                       # pytest test suite
-├── reports/                     # Generated reports
-├── memory/                      # Session JSON files
-├── docs/                        # Architecture docs
-├── .env                         # API keys (git-ignored)
-├── requirements.txt
-├── pyproject.toml
-└── README.md
+```powershell
+.venv\Scripts\python.exe -m uvicorn backend.main:app --host 127.0.0.1 --port 8000
 ```
 
----
+Open a second terminal in the project root:
 
-## 🚀 Quick Start
-
-### Prerequisites
-- Python 3.12+
-- [uv](https://docs.astral.sh/uv/) (recommended) or pip
-- An [OpenRouter](https://openrouter.ai/) API key
-
-### 1. Clone & Setup
-
-```bash
-git clone https://github.com/sudhanshu9944/Agentic-AI-Research-Assistant-main.git
-cd Agentic-AI-Research-Assistant-main
-
-# Create virtual environment
-uv venv
-.venv\Scripts\activate    # Windows
-# source .venv/bin/activate  # macOS/Linux
-```
-
-### 2. Install Dependencies
-
-```bash
-uv pip install -r requirements.txt
-```
-
-### 3. Configure Environment
-
-Create a `.env` file in the project root:
-
-```env
-OPENROUTER_API_KEY=your_api_key_here
-OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
-DEFAULT_MODEL=google/gemma-3-27b-it:free
-RERANKER_MODEL=nvidia/llama-nemotron-rerank-vl-1b-v2:free
-BACKEND_HOST=0.0.0.0
-BACKEND_PORT=8000
-```
-
-### 4. Start the Backend
-
-```bash
-python -m uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
-```
-
-### 5. Start the Frontend (new terminal)
-
-```bash
+```powershell
 cd frontend
-npm install
+npm ci
 npm run dev
 ```
 
-### 6. Open in Browser
+Open **http://127.0.0.1:5173** and keep both terminals running. No Python activation or execution-policy change is needed. See the local guide for macOS/Linux, preview mode and troubleshooting.
 
-Navigate to `http://localhost:5173` and start researching!
+## Research flow
 
----
+1. Sign up locally for 100 demo app tokens, or log in to this browser's account.
+2. Enter a topic. AI suggests relevant angles for 2 app tokens.
+3. Select the checkboxes you want; add your own angle if needed.
+4. Research the chosen scope for 10 app tokens.
+5. Read the summary, excluded topics and evidence gaps; inspect sources and the full report.
+6. Generate a PDF or Markdown file for free. Failed operations refund their reserved app tokens.
 
-## 📡 API Reference
+Theme selection and local login persist in the browser. Public links and footer credits are centralized in `frontend/src/config/project.js`.
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/research` | Execute full research workflow |
-| `GET` | `/history` | List all past sessions |
-| `GET` | `/report/{id}` | Get a specific report |
-| `POST` | `/export/pdf` | Download PDF report |
-| `POST` | `/export/markdown` | Download Markdown report |
-| `GET` | `/health` | Health check |
+## Repository layout
 
-### Example: Run Research
-
-```bash
-curl -X POST http://localhost:8000/research \
-  -H "Content-Type: application/json" \
-  -d '{"query": "Research Agentic AI"}'
+```text
+backend/
+  api/routes/        Health, research, history and export endpoints
+  agents/            Planning, research, analysis, summary and reporting
+  services/          Provider calls, retry budgets and relevance ranking
+  tools/             Search adapters
+  graph/             Workflow composition and persistence handoff
+  schemas/           API and workflow-state contracts
+  memory/            Atomic JSON session storage
+  export/            PDF/Markdown rendering, fonts and licenses
+frontend/
+  src/app/           App composition and workspace orchestration
+  src/features/      Research views, local accounts and theme behavior
+  src/components/    Shared layout and notifications
+  src/services/      HTTP client and explicit file downloads
+  src/config/        Public project links and credits
+  src/styles/        Readable styles grouped by responsibility
+  tests/             Account/token-ledger behavior tests
+  scripts/           Deployment configuration validation
+tests/               Backend API, workflow, storage and export tests
+docs/                Setup, architecture, configuration and deployment
+.github/workflows/   Automated quality checks
 ```
 
----
+## Development checks
 
-## 🧪 Testing
-
-```bash
-pytest tests/ -v
+```powershell
+.venv\Scripts\python.exe -m ruff check backend tests
+.venv\Scripts\python.exe -m ruff format --check backend tests
+.venv\Scripts\python.exe -m pytest -q
+cd frontend
+npm run format:check
+npm run lint
+npm test
+npm run build
 ```
 
----
+## Boundaries
 
-## 🔧 Tech Stack
+Local accounts and app tokens live in browser localStorage. They are demonstration controls, not server authentication or secure billing. The saved research library belongs to the installation. Groq's actual quota is separate.
 
-| Component | Technology |
-|-----------|-----------|
-| Backend | FastAPI + Uvicorn |
-| Frontend | Streamlit |
-| Agent Framework | LangGraph |
-| LLM | OpenRouter API |
-| Search | DuckDuckGo + Wikipedia |
-| Vision Reranking | NVIDIA Nemotron VL |
-| Memory | JSON File Storage |
-| PDF Export | fpdf2 |
-| Validation | Pydantic v2 |
-| HTTP Client | httpx |
-| Retry Logic | tenacity |
+Research uses retrieved search excerpts, not complete article/PDF ingestion or uploaded-PDF OCR. Public search and free API availability vary. Essential failures produce errors rather than fabricated successful reports.
 
----
+The source package excludes API keys, account passwords, generated reports, history, virtual environments and node_modules. See [credits](CREDITS.md) and the bundled [font license](backend/export/fonts/LICENSE).
 
-## 🔒 Security
+Made with ❤️ by **Sudhanshu Singh, Himanshu Chauhan, Tanmay Pahuja**.
 
-- API keys stored in `.env` (git-ignored)
-- Path traversal protection in memory manager
-- Input validation via Pydantic
-- CORS configured for frontend access
-
----
-
-## 🚀 Future Enhancements
-
-- [ ] Streaming responses via WebSocket
-- [ ] PostgreSQL/Redis for production memory
-- [ ] User authentication (OAuth2)
-- [ ] Concurrent agent execution
-- [ ] Custom source integrations (arXiv, Google Scholar)
-- [ ] Report templates and customization
-- [ ] Docker containerization
-- [ ] CI/CD pipeline
-
----
-
-## 📄 License
-
-MIT License
-
----
-
-## ❤️ Made with Love
-
-### **Made with ❤️ by Sudhanshu Singh**
-
----
-
-*Built with ❤️ using LangGraph, FastAPI, and Streamlit*
+*Built with ❤️ using* React · FastAPI · LangGraph · Groq.

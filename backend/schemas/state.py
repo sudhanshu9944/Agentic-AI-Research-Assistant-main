@@ -53,4 +53,8 @@ class ResearchState(TypedDict, total=False):
     memory: dict
     logs: Annotated[list[str], operator.add]
     model: str
+    temperature: float
     session_id: str
+    selected_topics: list[str]
+    excluded_topics: list[str]
+    evidence_gaps: list[str]

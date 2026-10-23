@@ -31,6 +31,7 @@ logger = logging.getLogger(__name__)
 # Lifespan
 # ──────────────────────────────────────────────
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application startup and shutdown logic."""
@@ -59,19 +60,19 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title=settings.APP_NAME,
     description=(
-        "Production-ready Agentic AI Research Assistant powered by "
-        "LangGraph and OpenRouter. Performs multi-step research with "
+        "Agentic AI Research Assistant powered by "
+        "LangGraph and an OpenAI-compatible provider. Performs research with "
         "planning, searching, analysis, summarization, and report generation."
     ),
     version="1.0.0",
     lifespan=lifespan,
 )
 
-# CORS — allow Streamlit frontend
+# The browser uses anonymous API calls; local demo login does not issue server credentials.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )

@@ -9,6 +9,9 @@ Thread-safe operations with asyncio locks.
 from __future__ import annotations
 
 import json
+import os
+import re
+import tempfile
 import logging
 from datetime import datetime, timezone
 from pathlib import Path
@@ -41,7 +44,7 @@ class MemoryManager:
     def _session_path(self, session_id: str) -> Path:
         """Get the file path for a session ID."""
         # Sanitize the session_id to prevent path traversal
-        safe_id = session_id.replace("/", "_").replace("\\", "_").replace("..", "_")
+        safe_id = re.sub(r"[^a-zA-Z0-9_-]", "_", session_id)[:128] or "unknown"
         return self.memory_dir / f"{safe_id}.json"
 
     def save_session(self, session_id: str, data: dict) -> None:
@@ -63,13 +66,28 @@ class MemoryManager:
             data["created_at"] = datetime.now(timezone.utc).isoformat()
         data["updated_at"] = datetime.now(timezone.utc).isoformat()
 
+        temporary = None
         try:
-            with open(filepath, "w", encoding="utf-8") as f:
+            with tempfile.NamedTemporaryFile(
+                mode="w",
+                encoding="utf-8",
+                dir=self.memory_dir,
+                prefix=".session-",
+                suffix=".tmp",
+                delete=False,
+            ) as f:
+                temporary = Path(f.name)
                 json.dump(data, f, indent=2, ensure_ascii=False, default=str)
+                f.flush()
+                os.fsync(f.fileno())
+            os.replace(temporary, filepath)
             logger.info(f"Session {session_id[:8]}... saved to {filepath.name}")
         except Exception as e:
             logger.error(f"Failed to save session {session_id}: {e}")
             raise
+        finally:
+            if temporary is not None:
+                temporary.unlink(missing_ok=True)
 
     def load_session(self, session_id: str) -> Optional[dict]:
         """
@@ -121,12 +139,14 @@ class MemoryManager:
                     data = json.load(f)
 
                 summary = data.get("summary", "")
-                sessions.append({
-                    "session_id": data.get("session_id", filepath.stem),
-                    "query": data.get("user_query", "Unknown"),
-                    "created_at": data.get("created_at", ""),
-                    "summary_preview": summary[:200] if summary else "",
-                })
+                sessions.append(
+                    {
+                        "session_id": data.get("session_id", filepath.stem),
+                        "query": data.get("user_query", "Unknown"),
+                        "created_at": data.get("created_at", ""),
+                        "summary_preview": summary[:200] if summary else "",
+                    }
+                )
             except Exception as e:
                 logger.warning(f"Failed to read session file {filepath.name}: {e}")
 

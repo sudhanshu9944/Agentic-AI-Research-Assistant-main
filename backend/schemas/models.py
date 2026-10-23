@@ -5,16 +5,21 @@ Pydantic models for FastAPI request / response validation.
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Optional
-from pydantic import BaseModel, Field
+from typing import Optional, Annotated
+from pydantic import BaseModel, Field, ConfigDict
 
 
 # ──────────────────────────────────────────────
 # Request Models
 # ──────────────────────────────────────────────
 
+TopicText = Annotated[str, Field(min_length=2, max_length=180)]
+
+
 class ResearchRequest(BaseModel):
     """Body for POST /research."""
+
+    model_config = ConfigDict(str_strip_whitespace=True)
 
     query: str = Field(
         ...,
@@ -27,19 +32,21 @@ class ResearchRequest(BaseModel):
         default=None,
         description="OpenRouter model ID override (defaults to config).",
     )
+    temperature: float = Field(default=0.3, ge=0, le=1)
+    selected_topics: Optional[list[TopicText]] = Field(default=None, min_length=1, max_length=12)
+    excluded_topics: list[TopicText] = Field(default_factory=list, max_length=12)
 
 
 class ExportRequest(BaseModel):
     """Body for POST /export/pdf and POST /export/markdown."""
 
-    session_id: str = Field(
-        ..., description="Session ID of the research to export."
-    )
+    session_id: str = Field(..., description="Session ID of the research to export.")
 
 
 # ──────────────────────────────────────────────
 # Response Models
 # ──────────────────────────────────────────────
+
 
 class SourceItem(BaseModel):
     """A single research source."""
@@ -70,6 +77,9 @@ class ResearchResponse(BaseModel):
     final_report: str
     logs: list[str]
     created_at: str
+    selected_topics: list[str] = Field(default_factory=list)
+    excluded_topics: list[str] = Field(default_factory=list)
+    evidence_gaps: list[str] = Field(default_factory=list)
 
 
 class HistoryItem(BaseModel):
@@ -90,6 +100,6 @@ class HealthResponse(BaseModel):
     status: str = "healthy"
     app_name: str = ""
     version: str = "1.0.0"
-    timestamp: str = Field(
-        default_factory=lambda: datetime.utcnow().isoformat()
-    )
+    research_ready: bool = False
+    default_model: str = ""
+    timestamp: str = Field(default_factory=lambda: datetime.utcnow().isoformat())

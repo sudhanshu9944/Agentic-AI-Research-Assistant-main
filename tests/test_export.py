@@ -3,7 +3,6 @@ Tests for Export modules.
 """
 
 import pytest
-from pathlib import Path
 
 from backend.export.markdown_export import export_markdown, get_markdown_content
 from backend.export.pdf_export import export_pdf, get_pdf_bytes

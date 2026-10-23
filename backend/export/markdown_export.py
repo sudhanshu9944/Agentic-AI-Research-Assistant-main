@@ -8,6 +8,7 @@ with metadata header and saves to the reports directory.
 from __future__ import annotations
 
 import logging
+import json
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
@@ -42,25 +43,24 @@ def export_markdown(
     session_id = session_data.get("session_id", "unknown")
     query = session_data.get("user_query", "Research")
     report = session_data.get("final_report", "No report available.")
-    created_at = session_data.get(
-        "created_at", datetime.now(timezone.utc).isoformat()
-    )
+    created_at = session_data.get("created_at", datetime.now(timezone.utc).isoformat())
     sources = session_data.get("sources", [])
 
     # Create a clean filename from the query
-    safe_query = "".join(
-        c if c.isalnum() or c in (" ", "-", "_") else "_"
-        for c in query[:50]
-    ).strip().replace(" ", "_")
+    safe_query = (
+        "".join(c if c.isalnum() or c in (" ", "-", "_") else "_" for c in query[:50])
+        .strip()
+        .replace(" ", "_")
+    )
 
     filename = f"{safe_query}_{session_id[:8]}.md"
     filepath = output_dir / filename
 
     # Build the markdown content
     md_content = f"""---
-title: "{query}"
-session_id: "{session_id}"
-generated_at: "{created_at}"
+title: {json.dumps(query, ensure_ascii=False)}
+session_id: {json.dumps(session_id)}
+generated_at: {json.dumps(created_at)}
 sources_count: {len(sources)}
 generator: "AI Research Assistant"
 ---
@@ -101,15 +101,13 @@ def get_markdown_content(session_data: dict) -> str:
     query = session_data.get("user_query", "Research")
     report = session_data.get("final_report", "No report available.")
     session_id = session_data.get("session_id", "unknown")
-    created_at = session_data.get(
-        "created_at", datetime.now(timezone.utc).isoformat()
-    )
+    created_at = session_data.get("created_at", datetime.now(timezone.utc).isoformat())
     sources = session_data.get("sources", [])
 
     return f"""---
-title: "{query}"
-session_id: "{session_id}"
-generated_at: "{created_at}"
+title: {json.dumps(query, ensure_ascii=False)}
+session_id: {json.dumps(session_id)}
+generated_at: {json.dumps(created_at)}
 sources_count: {len(sources)}
 ---
 

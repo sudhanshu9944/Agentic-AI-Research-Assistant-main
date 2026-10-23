@@ -1,0 +1,352 @@
+/* themes styles */
+html[data-theme='dark'] {
+  color-scheme: dark;
+  --ink: #f5effc;
+  --cream: #2c2531;
+  --yellow: #efd356;
+  --pink: #653d58;
+  --blue: #254a5f;
+  --muted: #b1a8b9;
+  --line: #4b4055;
+  background: #16131c;
+  color: #f5effc;
+}
+html[data-theme='dark'] body {
+  background: #16131c;
+  color: #f5effc;
+}
+html[data-theme='dark'] button {
+  color: inherit;
+}
+html[data-theme='dark'] .utility-bar {
+  background: #0d0912;
+  color: #c3b5d3;
+}
+html[data-theme='dark'] .site-header {
+  border-bottom-color: #352b3f;
+}
+html[data-theme='dark'] .hero {
+  border-color: #49402b;
+}
+html[data-theme='dark'] mark {
+  background: var(--yellow);
+  color: #111;
+}
+html[data-theme='dark'] .brand-icon {
+  color: #111;
+}
+html[data-theme='dark'] .brand-ai {
+  color: #bd94ff;
+}
+html[data-theme='dark'] .site-header nav .nav-active {
+  color: #caa6ff;
+}
+html[data-theme='dark'] .history-count {
+  background: #372645;
+  color: #e0c4ff;
+}
+html[data-theme='dark'] .journey {
+  color: #9c90aa;
+}
+html[data-theme='dark'] .journey-step > span {
+  background: #211b28;
+  border-color: #5d4d69;
+}
+html[data-theme='dark'] .journey-step.current {
+  color: #fff;
+}
+html[data-theme='dark'] .journey-step.current > span {
+  background: var(--yellow);
+  color: #111;
+  border-color: #111;
+}
+html[data-theme='dark'] .journey-step.done > span {
+  background: #422f55;
+  color: #ddbcff;
+}
+html[data-theme='dark'] .journey-step i {
+  background: #413449;
+}
+html[data-theme='dark'] .hero-description,
+html[data-theme='dark'] .note-card p {
+  color: #ede4f4;
+}
+html[data-theme='dark'] .hero-checks svg {
+  color: #111;
+}
+html[data-theme='dark'] .button.primary,
+html[data-theme='dark'] .account-dialog .button.primary {
+  color: #111;
+  background: var(--yellow);
+}
+html[data-theme='dark'] .button.secondary {
+  background: #2b2235;
+  color: #f5effc;
+  border-color: #b19ac4;
+}
+html[data-theme='dark'] .small-stamp {
+  background: #30213f;
+  color: #ddc8f6;
+  border-color: #9c82b4;
+}
+html[data-theme='dark'] .topic-form {
+  background: #211b29;
+  border-color: #a28ab7;
+}
+html[data-theme='dark'] .topic-input-row input {
+  color: #f4edfc;
+}
+html[data-theme='dark'] input::placeholder {
+  color: #a194ad;
+}
+html[data-theme='dark'] .topic-input-row > svg {
+  color: #c1adcf;
+}
+html[data-theme='dark'] .token-cost-note {
+  color: #b8a8c4;
+}
+html[data-theme='dark'] .example-row > span {
+  color: #a89ab4;
+}
+html[data-theme='dark'] .example-row button {
+  background: #251d2f;
+  border-color: #4b3c59;
+  color: #d2c2df;
+}
+html[data-theme='dark'] .settings {
+  color: #b5a4c3;
+}
+html[data-theme='dark'] .settings select {
+  background: #211b29;
+  border-color: #5c486c;
+  color: #f5effc;
+}
+html[data-theme='dark'] .how-grid article {
+  border-top-color: #756180;
+}
+html[data-theme='dark'] .how-grid article > span {
+  background: #3a294c;
+  color: #d9bcfa;
+}
+html[data-theme='dark'] .site-footer {
+  background: #1d1625;
+  border-color: #3c2d4a;
+}
+html[data-theme='dark'] .site-footer p,
+html[data-theme='dark'] .footer-top a {
+  color: #beacca;
+}
+html[data-theme='dark'] .footer-credits {
+  border-color: #3c2d4a;
+}
+html[data-theme='dark'] .footer-credits strong {
+  color: #eee2f6;
+}
+html[data-theme='dark'] .footer-credits p + p {
+  color: #ab96bb;
+}
+html[data-theme='dark'] .back-link,
+html[data-theme='dark'] .section-intro {
+  color: #c1afce;
+}
+html[data-theme='dark'] .outline-toolbar svg,
+html[data-theme='dark'] .text-button {
+  color: #cba1f5;
+}
+html[data-theme='dark'] .topic-option {
+  background: #211b29;
+  border-color: #594568;
+}
+html[data-theme='dark'] .topic-option.selected {
+  background: #362741;
+  border-color: #bd8de6;
+  box-shadow: 3px 3px #0d0912;
+}
+html[data-theme='dark'] .option-number {
+  color: #b49cc5;
+}
+html[data-theme='dark'] .custom-topic {
+  background: #211a2b;
+  border-color: #685277;
+}
+html[data-theme='dark'] .custom-topic input {
+  background: #16101e;
+  color: #eee0f9;
+  border-color: #574062;
+}
+html[data-theme='dark'] .outline-footer {
+  border-color: #4b3b57;
+}
+html[data-theme='dark'] .outline-footer p {
+  color: #bdacc8;
+}
+html[data-theme='dark'] .research-progress {
+  background: #332d20;
+  border-color: #65573a;
+}
+html[data-theme='dark'] .research-progress small {
+  color: #c9b993;
+}
+html[data-theme='dark'] .review-stats {
+  border-color: #48384f;
+  color: #c4b0d0;
+}
+html[data-theme='dark'] .review-stats strong {
+  color: #f3e7fc;
+}
+html[data-theme='dark'] .review-ready {
+  color: #9dceb0;
+}
+html[data-theme='dark'] .review-summary {
+  border-color: #a58fb2;
+}
+html[data-theme='dark'] .coverage-card {
+  background: #261c31;
+  border-color: #564165;
+}
+html[data-theme='dark'] .coverage-card.yellow {
+  background: #322b20;
+  border-color: #635538;
+}
+html[data-theme='dark'] .coverage-card p,
+html[data-theme='dark'] .coverage-card li {
+  color: #dccde5;
+}
+html[data-theme='dark'] .coverage-card small {
+  color: #b9a6c7;
+}
+html[data-theme='dark'] .method-note {
+  border-color: #45334e;
+}
+html[data-theme='dark'] .method-note p {
+  color: #bfa8cd;
+}
+html[data-theme='dark'] .method-note strong {
+  color: #e9d9f3;
+}
+html[data-theme='dark'] .full-research {
+  border-color: #5b4269;
+}
+html[data-theme='dark'] .full-research > summary {
+  background: #2b1e35;
+}
+html[data-theme='dark'] .tabs-header {
+  border-color: #46304f;
+}
+html[data-theme='dark'] .tab-btn.active {
+  background: #4d2f63;
+  border-color: #8e5dae;
+  color: #e4c5fb;
+}
+html[data-theme='dark'] .plan-card {
+  background: #281e33;
+  border-color: #52395f;
+}
+html[data-theme='dark'] .query-code {
+  background: #3f2a4d;
+  color: #dbc0ed;
+}
+html[data-theme='dark'] .source-card {
+  border-color: #50365d;
+}
+html[data-theme='dark'] .source-link,
+html[data-theme='dark'] .markdown-body a {
+  color: #c8a5ed;
+}
+html[data-theme='dark'] .source-snippet,
+html[data-theme='dark'] .sources-count,
+html[data-theme='dark'] .source-score,
+html[data-theme='dark'] .insights-subtitle {
+  color: #bcabc7;
+}
+html[data-theme='dark'] .source-badge {
+  background: #4b305f;
+  color: #e6cdf8;
+}
+html[data-theme='dark'] .insight-card {
+  background: #291d34;
+}
+html[data-theme='dark'] .markdown-body blockquote {
+  background: #3b2948;
+}
+html[data-theme='dark'] .markdown-body th {
+  background: #4a305c;
+}
+html[data-theme='dark'] .markdown-body td,
+html[data-theme='dark'] .markdown-body th,
+html[data-theme='dark'] .markdown-body hr {
+  border-color: #664d73;
+}
+html[data-theme='dark'] .history-panel {
+  background: #251b2e;
+  border-color: #4c355b;
+}
+html[data-theme='dark'] .history-item {
+  background: #1b1324;
+  border-color: #4f365d;
+}
+html[data-theme='dark'] .history-item small {
+  color: #b49ac3;
+}
+html[data-theme='dark'] .error-notice,
+html[data-theme='dark'] .account-error {
+  background: #452a2b;
+  color: #f5c6bd;
+  border-color: #935e57;
+}
+html[data-theme='dark'] .welcome-tokens,
+html[data-theme='dark'] .profile-avatar {
+  background: #372445;
+  border-color: #65437b;
+  color: #dbc2ee;
+}
+html[data-theme='dark'] .login-button {
+  background: #dbc2ff;
+  color: #241333;
+  border-color: #dbc2ff;
+}
+html[data-theme='dark'] .token-pill {
+  background: #40361e;
+  border-color: #88713c;
+  color: #efdaa0;
+}
+html[data-theme='dark'] .profile-popover {
+  background: #261b2f;
+  border-color: #725481;
+}
+html[data-theme='dark'] .profile-popover > span,
+html[data-theme='dark'] .profile-popover small {
+  color: #bea8cb;
+}
+html[data-theme='dark'] .profile-popover button {
+  border-color: #765786;
+}
+html[data-theme='dark'] .account-dialog {
+  background: #241b2e;
+  color: #f3e7fc;
+  border-color: #9e7eaf;
+}
+html[data-theme='dark'] .account-intro,
+html[data-theme='dark'] .password-hint,
+html[data-theme='dark'] .local-account-note {
+  color: #bfa9cc;
+}
+html[data-theme='dark'] .account-tabs,
+html[data-theme='dark'] .token-explainer {
+  border-color: #63456f;
+}
+html[data-theme='dark'] .account-tabs button {
+  color: #b59bc3;
+}
+html[data-theme='dark'] .account-tabs button.active {
+  color: #f7eaff;
+}
+html[data-theme='dark'] .account-dialog input {
+  background: #170f20;
+  border-color: #6b4d77;
+  color: #fff;
+}
+html[data-theme='dark'] .token-explainer > span,
+html[data-theme='dark'] .token-explainer p {
+  color: #c6afcf;
+}

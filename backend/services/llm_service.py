@@ -8,13 +8,15 @@ Provides retry logic, model selection, and both sync/async invocation.
 from __future__ import annotations
 
 import logging
+from email.utils import parsedate_to_datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 from langchain_openai import ChatOpenAI
+from openai import APIConnectionError, APITimeoutError, RateLimitError, InternalServerError
 from tenacity import (
     retry,
     stop_after_attempt,
-    wait_exponential,
     retry_if_exception_type,
     before_sleep_log,
 )
@@ -22,6 +24,44 @@ from tenacity import (
 from backend.config import settings
 
 logger = logging.getLogger(__name__)
+
+
+def _retry_wait(retry_state) -> float:
+    """Respect the free provider's cooldown instead of retrying into the same limit."""
+    delay = min(2**retry_state.attempt_number, 10)
+    exception = retry_state.outcome.exception()
+    response = getattr(exception, "response", None)
+    retry_after = response.headers.get("retry-after") if response is not None else None
+    if retry_after:
+        try:
+            delay = max(delay, float(retry_after) + 0.5)
+        except ValueError:
+            try:
+                delay = max(
+                    delay,
+                    (
+                        parsedate_to_datetime(retry_after) - datetime.now(timezone.utc)
+                    ).total_seconds()
+                    + 0.5,
+                )
+            except (TypeError, ValueError):
+                pass
+    return min(max(delay, 0), 90)
+
+
+def _fit_free_token_budget(prompt: str, system_prompt: str | None, requested: int) -> int:
+    if "groq.com" not in settings.OPENROUTER_BASE_URL.lower():
+        return requested
+    import tiktoken
+
+    encoding = tiktoken.get_encoding("o200k_base")
+    estimated_input = len(encoding.encode((system_prompt or "") + "\n" + prompt)) + 100
+    available = settings.GROQ_TOKEN_BUDGET - estimated_input - 256
+    if available < 512:
+        raise ValueError(
+            "Research context exceeds the configured free API token budget. Try a narrower topic."
+        )
+    return min(requested, available)
 
 
 def get_llm(
@@ -53,21 +93,32 @@ def get_llm(
 
     target_model = model or settings.DEFAULT_MODEL
 
-    # If using Groq API, redirect non-Groq models to llama-3.3-70b-versatile
-    if "groq" in settings.OPENROUTER_BASE_URL.lower():
-        groq_models = {"llama-3.3-70b-versatile", "llama-3.1-8b-instant", "mixtral-8x7b-32768"}
-        if target_model not in groq_models:
-            target_model = "llama-3.3-70b-versatile"
-    else:
-        # OpenRouter fallback mapping
-        if target_model == "qwen/qwen-2.5-7b-instruct":
-            target_model = "qwen/qwen-2.5-7b-instruct:free"
-        discontinued_free_models = {
-            "google/gemma-3-27b-it:free",
-            "google/gemini-2.5-flash:free",
+    # Old UI versions sent Groq-only aliases even when OpenRouter was configured.
+    if "openrouter.ai" in settings.OPENROUTER_BASE_URL.lower():
+        aliases = {
+            "llama-3.3-70b-versatile": "meta-llama/llama-3.3-70b-instruct",
+            "llama-3.1-8b-instant": "meta-llama/llama-3.1-8b-instruct",
         }
-        if target_model in discontinued_free_models:
-            target_model = "openrouter/free"
+        if target_model == "mixtral-8x7b-32768":
+            raise ValueError(
+                "This legacy model is no longer a supported preset. Choose the server default or a provider model ID."
+            )
+        target_model = aliases.get(target_model, target_model)
+    elif "groq.com" in settings.OPENROUTER_BASE_URL.lower():
+        legacy_models = {"llama-3.3-70b-versatile", "llama-3.1-8b-instant", "mixtral-8x7b-32768"}
+        if target_model in legacy_models:
+            logger.warning(
+                "Legacy model %s replaced with configured free model %s",
+                target_model,
+                settings.DEFAULT_MODEL,
+            )
+            target_model = settings.DEFAULT_MODEL
+
+    model_options = {}
+    if "groq.com" in settings.OPENROUTER_BASE_URL.lower() and target_model.startswith(
+        "openai/gpt-oss-"
+    ):
+        model_options["reasoning_effort"] = "low"
 
     return ChatOpenAI(
         model=target_model,
@@ -76,6 +127,9 @@ def get_llm(
         temperature=temperature,
         max_tokens=max_tokens,
         streaming=streaming,
+        timeout=60,
+        max_retries=0,
+        **model_options,
         default_headers={
             "HTTP-Referer": "http://localhost:8000",
             "X-Title": settings.APP_NAME,
@@ -85,8 +139,10 @@ def get_llm(
 
 @retry(
     stop=stop_after_attempt(3),
-    wait=wait_exponential(multiplier=1, min=2, max=10),
-    retry=retry_if_exception_type(Exception),
+    wait=_retry_wait,
+    retry=retry_if_exception_type(
+        (APIConnectionError, APITimeoutError, RateLimitError, InternalServerError)
+    ),
     before_sleep=before_sleep_log(logger, logging.WARNING),
     reraise=True,
 )
@@ -120,6 +176,7 @@ async def invoke_llm(
     """
     from langchain_core.messages import HumanMessage, SystemMessage
 
+    max_tokens = _fit_free_token_budget(prompt, system_prompt, max_tokens)
     llm = get_llm(model=model, temperature=temperature, max_tokens=max_tokens)
 
     messages = []
@@ -139,12 +196,6 @@ async def invoke_llm(
         raise
 
 
-@retry(
-    stop=stop_after_attempt(3),
-    wait=wait_exponential(multiplier=1, min=2, max=10),
-    retry=retry_if_exception_type(Exception),
-    reraise=True,
-)
 async def invoke_llm_json(
     prompt: str,
     model: Optional[str] = None,

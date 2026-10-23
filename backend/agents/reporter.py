@@ -22,9 +22,11 @@ fact-based research reports. Your reports are known for their clarity, accuracy,
 CRITICAL RULES FOR ACCURACY:
 - ONLY include facts, data, and claims that are directly supported by the provided sources and insights
 - NEVER fabricate statistics, percentages, dates, or claims not found in the research data
-- If the data is insufficient for a section, state "Based on available research..." rather than inventing facts
+- If evidence is insufficient, explicitly state "The retrieved sources do not establish this." Do not fill gaps with prior knowledge.
 - Use hedging language ("research suggests", "evidence indicates") rather than absolute claims when appropriate
 - Every major claim must reference a source using [Source N] notation
+- The input contains SEARCH EXCERPTS, not full-page verification. Attribute claims to the retrieved excerpts; never describe sources as authoritative or verified without evidence.
+- Every number, date, named policy and forecast must appear explicitly in a cited source excerpt. Omit any unsupported specifics even if an intermediate insight or summary contains them.
 - Clearly distinguish between established facts and emerging trends/opinions
 
 REPORT STRUCTURE — Use this exact format:
@@ -110,7 +112,7 @@ FORMATTING GUIDELINES:
 - Use *italic* for emphasis, caveats, or secondary information
 - Use --- for section dividers where appropriate
 - Use ### for sub-section headings within main sections
-- Write 1500-3000 words of substantive, clear content
+- Match length to the evidence. A short, accurate report is required when excerpts are sparse; never expand to meet a word count.
 - Every paragraph should convey specific, useful information — NO filler text
 - Use code blocks (```) for technical terms, commands, or data formats if relevant
 """
@@ -144,20 +146,14 @@ async def reporter_node(state: dict) -> dict:
 
     # Format all data for the prompt
     objectives_text = "\n".join(
-        f"  - {obj}"
-        for obj in research_plan.get("objectives", ["General research"])
+        f"  - {obj}" for obj in research_plan.get("objectives", ["General research"])
     )
-    sub_topics_text = "\n".join(
-        f"  - {st}"
-        for st in research_plan.get("sub_topics", [user_query])
-    )
-    insights_text = "\n".join(
-        f"  {i + 1}. {insight}" for i, insight in enumerate(insights)
-    )
+    sub_topics_text = "\n".join(f"  - {st}" for st in research_plan.get("sub_topics", [user_query]))
+    insights_text = "\n".join(f"  {i + 1}. {insight}" for i, insight in enumerate(insights))
     sources_text = "\n".join(
         f"  [{i + 1}] {s.get('title', 'Untitled')} — {s.get('url', 'N/A')} "
         f"(Source: {s.get('source', 'unknown')})\n"
-        f"       Snippet: {s.get('snippet', s.get('relevance_score', 'N/A'))}"
+        f"       Snippet excerpt: {s.get('snippet', '')[:600]}"
         for i, s in enumerate(sources)
     )
 
@@ -172,7 +168,7 @@ RESEARCH OBJECTIVES:
 SUB-TOPICS INVESTIGATED:
 {sub_topics_text}
 
-KEY INSIGHTS (verified from sources):
+KEY INSIGHTS (model-extracted; cross-check against excerpts):
 {insights_text}
 
 EXECUTIVE SUMMARY:
@@ -181,6 +177,10 @@ EXECUTIVE SUMMARY:
 SOURCES ({len(sources)} total):
 {sources_text}
 
+USER-SELECTED SCOPE: {state.get("selected_topics", [])}
+NOT SELECTED (do not develop these as standalone sections): {state.get("excluded_topics", [])}
+EVIDENCE GAPS (state these explicitly, never fill with invented claims): {state.get("evidence_gaps", [])}
+
 CRITICAL INSTRUCTIONS:
 1. Generate a complete, professional research report following the exact structure in your guidelines
 2. ONLY state facts and data that are supported by the insights and sources above
@@ -188,23 +188,22 @@ CRITICAL INSTRUCTIONS:
 4. Include AT LEAST 2 blockquotes (> ) highlighting key findings
 5. Use bullet points, numbered lists, and bold/italic formatting throughout
 6. Cite every major claim with [Source N] notation
-7. If data is insufficient for a claim, say "Based on available research..." — DO NOT fabricate
-8. The report should be thorough (1500-3000 words) with ZERO filler content
-9. Every paragraph must convey specific, useful information"""
+7. If evidence is insufficient, state "The retrieved sources do not establish this." Omit unsupported specifics.
+8. Use only as much text as the source excerpts support, with ZERO filler content
+9. Every paragraph must convey specific, useful information
+10. If USER-SELECTED SCOPE is non-empty, it overrides the generic section template: develop only those angles. Omit an optional Future Outlook or comparison section if it would introduce a deselected topic."""
 
     try:
         report = await invoke_llm(
             prompt=prompt,
             model=model,
             system_prompt=REPORTER_SYSTEM_PROMPT,
-            temperature=0.2,  # Lower temperature for more factual output
-            max_tokens=8192,
+            temperature=state.get("temperature", 0.2),  # Lower temperature for more factual output
+            max_tokens=4096,
         )
 
         if not report or not report.strip():
-            report = _generate_fallback_report(
-                user_query, research_plan, insights, summary, sources, report_date
-            )
+            raise ValueError("The model returned an empty report")
 
         logger.info(
             f"[Reporter] Generated report ({len(report)} chars) "
@@ -220,77 +219,6 @@ CRITICAL INSTRUCTIONS:
         }
 
     except Exception as e:
-        logger.error(f"[Reporter] Error: {e}")
-        fallback = _generate_fallback_report(
-            user_query, research_plan, insights, summary, sources, report_date
-        )
-        return {
-            "final_report": fallback,
-            "logs": [
-                f"[{timestamp}] ⚠️ Reporter: Error ({e}), "
-                f"generated structured fallback report"
-            ],
-        }
-
-
-def _generate_fallback_report(
-    query: str,
-    plan: dict,
-    insights: list[str],
-    summary: str,
-    sources: list[dict],
-    date: str,
-) -> str:
-    """Generate a structured fallback report when LLM fails.
-
-    Enhanced to include tables, blockquotes, and proper formatting
-    even in fallback mode.
-    """
-    report = f"# {query} — Research Report\n\n"
-    report += f"**Generated:** {date}\n"
-    report += f"**Sources Consulted:** {len(sources)}\n\n"
-    report += "---\n\n"
-
-    # Executive Summary with blockquote
-    report += "## Executive Summary\n\n"
-    if summary:
-        first_sentence = summary.split(".")[0] + "." if "." in summary else summary
-        report += f"> {first_sentence}\n\n"
-        report += f"{summary}\n\n"
-    else:
-        report += f"> Research was conducted on {query} using multiple sources.\n\n"
-
-    # Key Findings Table
-    report += "## Key Findings at a Glance\n\n"
-    if insights:
-        report += "| # | Finding | Category |\n"
-        report += "|---|---------|----------|\n"
-        for i, insight in enumerate(insights[:8], 1):
-            # Truncate for table
-            short = insight[:80] + "..." if len(insight) > 80 else insight
-            report += f"| {i} | {short} | Research Finding |\n"
-        report += "\n"
-
-    # Research Objectives
-    report += "## Research Objectives\n\n"
-    for obj in plan.get("objectives", [f"Research {query}"]):
-        report += f"- {obj}\n"
-    report += "\n"
-
-    # Detailed Findings
-    report += "## Key Findings\n\n"
-    for i, insight in enumerate(insights, 1):
-        report += f"{i}. **Finding {i}**: {insight}\n\n"
-
-    # Sources Table
-    report += "## References\n\n"
-    report += "| # | Source | Type | URL |\n"
-    report += "|---|--------|------|-----|\n"
-    for i, source in enumerate(sources, 1):
-        title = source.get("title", "Untitled")[:40]
-        url = source.get("url", "N/A")
-        src = source.get("source", "unknown")
-        report += f"| {i} | {title} | {src} | {url} |\n"
-
-    report += "\n---\n*Report generated by AI Research Assistant*\n"
-    return report
+        raise RuntimeError(
+            "Reporter failed. Check the configured API key, model, and provider availability."
+        ) from e

@@ -1,4 +1,5 @@
 """Quick verification script for the enhanced PDF export."""
+
 import sys
 from pathlib import Path
 
@@ -6,7 +7,7 @@ from pathlib import Path
 project_root = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(project_root))
 
-from backend.export.pdf_export import get_pdf_bytes
+from backend.export.pdf_export import get_pdf_bytes  # noqa: E402
 
 sample_session = {
     "session_id": "verify-test-001",
@@ -17,9 +18,24 @@ sample_session = {
         "search_queries": ["agentic AI 2025", "LLM agent frameworks"],
     },
     "sources": [
-        {"title": "LangChain Documentation", "url": "https://docs.langchain.com", "snippet": "LangChain is a framework for developing applications powered by language models.", "source": "duckduckgo"},
-        {"title": "AutoGPT GitHub", "url": "https://github.com/Significant-Gravitas/AutoGPT", "snippet": "AutoGPT is an experimental open-source autonomous AI agent.", "source": "duckduckgo"},
-        {"title": "Wikipedia: AI Agent", "url": "https://en.wikipedia.org/wiki/Intelligent_agent", "snippet": "An intelligent agent is an autonomous entity that acts upon an environment.", "source": "wikipedia"},
+        {
+            "title": "LangChain Documentation",
+            "url": "https://docs.langchain.com",
+            "snippet": "LangChain is a framework for developing applications powered by language models.",
+            "source": "duckduckgo",
+        },
+        {
+            "title": "AutoGPT GitHub",
+            "url": "https://github.com/Significant-Gravitas/AutoGPT",
+            "snippet": "AutoGPT is an experimental open-source autonomous AI agent.",
+            "source": "duckduckgo",
+        },
+        {
+            "title": "Wikipedia: AI Agent",
+            "url": "https://en.wikipedia.org/wiki/Intelligent_agent",
+            "snippet": "An intelligent agent is an autonomous entity that acts upon an environment.",
+            "source": "wikipedia",
+        },
     ],
     "insights": [
         "Agentic AI is rapidly evolving with new frameworks emerging monthly",
@@ -109,7 +125,7 @@ Agentic AI is transforming the software landscape. Organizations that invest in 
 
 print("Generating enhanced PDF...")
 pdf_bytes = get_pdf_bytes(sample_session)
-print(f"PDF generated successfully!")
+print("PDF generated successfully!")
 print(f"  Size: {len(pdf_bytes):,} bytes")
 print(f"  Magic: {pdf_bytes[:4]}")
 

@@ -2,9 +2,7 @@
 Tests for Memory Manager.
 """
 
-import json
 import pytest
-import tempfile
 from pathlib import Path
 
 from backend.memory.memory_manager import MemoryManager
@@ -51,24 +49,33 @@ class TestMemoryManager:
     def test_list_sessions(self, manager):
         """Should list all saved sessions."""
         for i in range(3):
-            manager.save_session(f"session-{i}", {
-                "user_query": f"Query {i}",
-                "summary": f"Summary {i}",
-            })
+            manager.save_session(
+                f"session-{i}",
+                {
+                    "user_query": f"Query {i}",
+                    "summary": f"Summary {i}",
+                },
+            )
 
         sessions = manager.list_sessions()
         assert len(sessions) == 3
 
     def test_list_sessions_sorted_by_date(self, manager):
         """Sessions should be sorted newest first."""
-        manager.save_session("old", {
-            "user_query": "Old",
-            "created_at": "2024-01-01T00:00:00",
-        })
-        manager.save_session("new", {
-            "user_query": "New",
-            "created_at": "2025-01-01T00:00:00",
-        })
+        manager.save_session(
+            "old",
+            {
+                "user_query": "Old",
+                "created_at": "2024-01-01T00:00:00",
+            },
+        )
+        manager.save_session(
+            "new",
+            {
+                "user_query": "New",
+                "created_at": "2025-01-01T00:00:00",
+            },
+        )
 
         sessions = manager.list_sessions()
         assert sessions[0]["session_id"] == "new"

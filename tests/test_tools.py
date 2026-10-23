@@ -3,7 +3,6 @@ Tests for search tools.
 """
 
 import pytest
-import asyncio
 from unittest.mock import patch, MagicMock
 
 
@@ -17,8 +16,6 @@ class TestSearchDuckDuckGo:
 
         with patch("backend.tools.search_tools.DDGS") as mock_ddgs:
             mock_instance = MagicMock()
-            mock_instance.__enter__ = MagicMock(return_value=mock_instance)
-            mock_instance.__exit__ = MagicMock(return_value=False)
             mock_instance.text.return_value = [
                 {
                     "title": "Test Result",
@@ -47,8 +44,6 @@ class TestSearchDuckDuckGo:
 
         with patch("backend.tools.search_tools.DDGS") as mock_ddgs:
             mock_instance = MagicMock()
-            mock_instance.__enter__ = MagicMock(return_value=mock_instance)
-            mock_instance.__exit__ = MagicMock(return_value=False)
             mock_instance.text.return_value = [
                 {
                     "title": "Title",
@@ -64,7 +59,7 @@ class TestSearchDuckDuckGo:
             assert "title" in result
             assert "url" in result
             assert "snippet" in result
-            assert result["source"] == "duckduckgo"
+            assert result["source"] == "web"
 
 
 class TestSearchWikipedia:
@@ -75,8 +70,9 @@ class TestSearchWikipedia:
         """Search should return empty list on error."""
         from backend.tools.search_tools import search_wikipedia
 
-        with patch("backend.tools.search_tools.wikipedia") as mock_wiki:
-            mock_wiki.search.side_effect = Exception("Network error")
+        with patch(
+            "backend.tools.search_tools.httpx.Client", side_effect=Exception("Network error")
+        ):
             results = await search_wikipedia("test query")
             assert results == []
 
@@ -89,13 +85,20 @@ class TestSearchAll:
         """Combined search should deduplicate by URL."""
         from backend.tools.search_tools import search_all
 
-        with patch("backend.tools.search_tools.search_duckduckgo") as mock_ddg, \
-             patch("backend.tools.search_tools.search_wikipedia") as mock_wiki:
+        with (
+            patch("backend.tools.search_tools.search_duckduckgo") as mock_ddg,
+            patch("backend.tools.search_tools.search_wikipedia") as mock_wiki,
+        ):
             mock_ddg.return_value = [
                 {"title": "A", "url": "https://example.com/a", "snippet": "s", "source": "ddg"}
             ]
             mock_wiki.return_value = [
-                {"title": "A dup", "url": "https://example.com/a", "snippet": "s2", "source": "wiki"},
+                {
+                    "title": "A dup",
+                    "url": "https://example.com/a",
+                    "snippet": "s2",
+                    "source": "wiki",
+                },
                 {"title": "B", "url": "https://example.com/b", "snippet": "s3", "source": "wiki"},
             ]
 
