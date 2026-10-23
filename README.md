@@ -8,7 +8,7 @@ A research workspace built with React, FastAPI, LangGraph and Groq.
 
 [![Quality checks](https://github.com/sudhanshu9944/Agentic-AI-Research-Assistant-main/actions/workflows/quality.yml/badge.svg)](https://github.com/sudhanshu9944/Agentic-AI-Research-Assistant-main/actions/workflows/quality.yml)
 
-[Getting started](#getting-started) · [How it works](#how-it-works) · [Architecture](docs/ARCHITECTURE.md) · [Deployment](docs/DEPLOYMENT.md)
+[Live demo](https://agentic-ai-research-assistant-main.vercel.app/) · [Getting started](#getting-started) · [How it works](#how-it-works) · [Architecture](docs/ARCHITECTURE.md) · [Deployment](docs/DEPLOYMENT.md)
 
 </div>
 
@@ -46,7 +46,14 @@ sources and evidence gaps before generating a PDF or Markdown file.
 
 ## Getting started
 
-Install **Python 3.12** and **Node.js 24**, then open a terminal in the project root.
+Install **Python 3.12**, **Node.js 24** and Git, then download the ZIP or clone:
+
+```powershell
+git clone https://github.com/sudhanshu9944/Agentic-AI-Research-Assistant-main.git
+cd Agentic-AI-Research-Assistant-main
+```
+
+Run the following commands from this project folder.
 
 **1. Install the backend**
 
@@ -59,6 +66,24 @@ py -3.12 -m venv .venv
 
 Copy `.env.example` to `.env` if the file does not already exist. Open `.env`
 and set `GROQ_API_KEY` to your own Groq key. Keep this file private.
+
+```powershell
+Copy-Item .env.example .env
+notepad .env
+```
+
+Run the copy command only for the first setup; do not overwrite an existing key.
+Inside `.env`, replace the placeholder with the key from your Groq account:
+
+```dotenv
+GROQ_API_KEY=your_groq_api_key_here
+OPENROUTER_BASE_URL=https://api.groq.com/openai/v1
+DEFAULT_MODEL=openai/gpt-oss-120b
+RERANKER_MODEL=openai/gpt-oss-20b
+```
+
+No source-code edit is needed to replace a Groq key. Save `.env` and restart the
+backend after changing it. `.env` is excluded from Git and the downloadable ZIP.
 
 **3. Start the backend**
 
@@ -79,6 +104,26 @@ Open **http://127.0.0.1:5173**. Keep both terminals running.
 See the [local setup guide](docs/LOCAL_SETUP.md) for macOS/Linux, daily startup,
 API-key replacement, configuration and troubleshooting. The backend's API
 reference is available at **http://127.0.0.1:8000/docs** while it is running.
+
+## API and model settings
+
+| Change | Where to edit | Apply the change |
+| --- | --- | --- |
+| Groq API key | Root `.env`: `GROQ_API_KEY` | Restart the backend. |
+| Provider base URL | Root `.env`: `OPENROUTER_BASE_URL` | Use an OpenAI-compatible provider and its matching key; restart backend. |
+| Backend default/ranking models | Root `.env`: `DEFAULT_MODEL`, `RERANKER_MODEL` | Use model IDs supported by that provider; restart backend. |
+| Model choices shown in the UI | `frontend/src/features/research/config.js`: `MODELS` | Update IDs/labels for a new provider; Vite reloads in development. |
+| Deployed backend key | Vercel project → Settings → Environment Variables: `GROQ_API_KEY` | Save for Production/Preview as needed, then redeploy. |
+
+The selected model in **Research preferences** is sent with each research
+request, so changing only the backend default does not replace the UI's selected
+model. API configuration is loaded by `backend/config.py`; keep actual keys out
+of that file and all frontend files. For ordinary local use leave `VERCEL` unset;
+private Blob storage and `SESSION_SECRET` are needed only for hosted deployment.
+
+After the first installation, start just the backend command and `npm run dev`
+in two terminals; `npm ci` and Python dependency installation need not run daily.
+Stop both servers with Ctrl+C.
 
 ## How it works
 
