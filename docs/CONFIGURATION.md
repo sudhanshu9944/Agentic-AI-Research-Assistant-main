@@ -13,11 +13,17 @@ The backend reads the root `.env` through `backend/config.py`. Settings load whe
 | `RERANKER_MODEL` | `openai/gpt-oss-20b`. Used for optional batch ranking. |
 | `GROQ_TOKEN_BUDGET` | `8000`; request/completion budgeting, not a purchased allocation. |
 | `BACKEND_PORT` | `8000`; hosting platforms may supply `PORT`. |
+| `BACKEND_HOST` | `127.0.0.1` for local use. Docker/hosting explicitly bind their internal interface. |
+| `ALLOWED_ORIGINS` | Comma-separated exact browser origins. Defaults to localhost/127.0.0.1 on ports 5173, 4173 and 80; set your actual frontend origin when hosting. Wildcard entries are ignored. |
 | `MEMORY_DIR` | Root `memory/`; use persistent storage on a hosted backend. |
 | `REPORTS_DIR` | Root `reports/`; file-export storage. |
 | `DEBUG` | `false`; extra development logging when true. |
 
 Changing the provider key needs a backend restart, not a frontend rebuild. Verify access with a real research request: `/health` checks presence only.
+
+An Origin check is a browser boundary, not authentication. Non-browser clients
+can omit or forge the header. Keep this demo private/local until server-side
+authentication, per-user authorization and quotas are implemented.
 
 ## Frontend
 

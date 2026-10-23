@@ -4,7 +4,7 @@
 
 The structured release was checked with Python 3.12 and Node 24:
 
-- Backend: 50 regression tests passed, including malformed AI responses,
+- Backend: 56 regression tests passed, including malformed AI responses,
   essential failures, persistence, scoped research and PDF/Markdown export.
 - Ruff lint and formatting checks passed.
 - Frontend: local account, password hashing, session persistence, token
@@ -33,3 +33,6 @@ return rate limits or unusable evidence. The application reports failures and
 allows retries; it does not manufacture success. Local accounts/credits are a
 demo, not server authorization or Groq billing quotas. Browser progress is an
 estimate. Hosting must provide a working backend and writable session storage.
+
+Security follow-up: see SECURITY_REVIEW.md for dependency audits, privacy scan,
+request limits, link safety and remaining server-authentication boundaries.

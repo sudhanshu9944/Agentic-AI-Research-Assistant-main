@@ -20,6 +20,7 @@ A research workspace where you choose the scope, inspect source-based findings, 
 - [API reference](docs/API.md)
 - [Vercel frontend and backend deployment](docs/DEPLOYMENT.md)
 - [Verification and known limits](docs/VERIFICATION.md)
+- [Security and privacy](SECURITY.md)
 - [Development conventions](CONTRIBUTING.md)
 
 ## Run locally on Windows

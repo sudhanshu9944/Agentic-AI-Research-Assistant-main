@@ -31,6 +31,9 @@ A healthy process alone does not prove the provider key or public search works.
 2. Set **Root Directory** to `frontend` and framework to Vite.
 3. Use `npm ci` to install, `npm run build` to build, and `dist` for output.
 4. Set `VITE_API_BASE_URL` to the working backend's public HTTPS base URL.
+   On the backend set `ALLOWED_ORIGINS` to the frontend's exact origin,
+   e.g. `https://your-project.vercel.app` (no path or trailing slash).
+   Add individual preview origins explicitly when needed; do not use a wildcard.
 5. Deploy and verify recommendation → scope selection → preview → PDF download.
 
 `frontend/vercel.json` supplies the SPA rewrite. The prebuild check rejects a
@@ -42,6 +45,10 @@ compiled into browser assets. Provider keys belong only on the backend.
 Do not deploy this file-backed backend as a stateless function without adapting
 session storage and request execution. Different instances may not share files.
 The current backend is an anonymous college demo, not a private multi-user API.
+The security update limits browser origins and local network binding. These
+controls do not authorize remote API clients. Do not expose private saved
+reports through this anonymous API. For a public release, complete server-side
+identity, report ownership checks and request quotas before opening access.
 Before opening unrestricted paid API usage, add server-side authentication,
 authorization and quotas. Browser credits are presentation/demo state only.
 

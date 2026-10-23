@@ -28,8 +28,17 @@ class Settings:
     GROQ_TOKEN_BUDGET: int = int(os.getenv("GROQ_TOKEN_BUDGET", "8000"))
 
     # Backend
-    BACKEND_HOST: str = os.getenv("BACKEND_HOST", "0.0.0.0")
+    BACKEND_HOST: str = os.getenv("BACKEND_HOST", "127.0.0.1")
     BACKEND_PORT: int = int(os.getenv("PORT") or os.getenv("BACKEND_PORT") or "8000")
+    ALLOWED_ORIGINS: list[str] = [
+        origin.strip().rstrip("/")
+        for origin in os.getenv(
+            "ALLOWED_ORIGINS",
+            "http://127.0.0.1:5173,http://localhost:5173,http://127.0.0.1:4173,"
+            "http://localhost:4173,http://127.0.0.1,http://localhost",
+        ).split(",")
+        if origin.strip() and origin.strip() != "*"
+    ]
 
     # App
     APP_NAME: str = os.getenv("APP_NAME", "AI Research Assistant")

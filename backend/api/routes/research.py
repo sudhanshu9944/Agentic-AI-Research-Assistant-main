@@ -38,7 +38,7 @@ async def recommend_topics(request: ResearchRequest):
             raise ValueError("No valid topic suggestions returned")
         return {"query": request.query, "topics": topics, "objectives": plan.get("objectives", [])}
     except Exception as exc:
-        logger.error("Topic recommendations failed: %s", exc)
+        logger.error("Topic recommendations failed (%s)", type(exc).__name__)
         raise HTTPException(
             status_code=502, detail="AI recommendations could not be generated. Please retry."
         ) from exc
@@ -52,7 +52,7 @@ async def run_research_endpoint(request: ResearchRequest):
     Runs the LangGraph pipeline:
     Planner → Researcher → Analyst → Summarizer → Reporter → Memory
     """
-    logger.info(f"Research request received: '{request.query}'")
+    logger.info("Research request received")
 
     try:
         settings.validate()
@@ -91,8 +91,8 @@ async def run_research_endpoint(request: ResearchRequest):
         )
 
     except Exception as e:
-        logger.error(f"Research pipeline failed: {e}", exc_info=True)
+        logger.error("Research pipeline failed (%s)", type(e).__name__)
         raise HTTPException(
             status_code=500,
-            detail=f"Research pipeline failed: {str(e)}",
-        )
+            detail="Research could not be completed. Check the provider configuration or retry later.",
+        ) from e

@@ -1,6 +1,6 @@
+import { safeExternalUrl } from '../../../services/safeExternalUrl';
 import { useState } from 'react';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
+import ResearchMarkdown from '../../../components/ui/ResearchMarkdown';
 import { Target, Search, AlertCircle, FileText, Globe, Lightbulb } from 'lucide-react';
 
 export default function ReportViewer({ result }) {
@@ -102,7 +102,7 @@ export default function ReportViewer({ result }) {
                 </p>
                 {sources.map((source, index) => {
                   const title = source.title || 'Untitled';
-                  const url = source.url || '#';
+                  const url = safeExternalUrl(source.url);
                   const srcType = source.source || 'unknown';
                   const score = source.relevance_score;
 
@@ -162,9 +162,7 @@ export default function ReportViewer({ result }) {
         {activeTab === 'summary' && (
           <div className="tab-pane animate-fade-in markdown-container">
             {summary ? (
-              <ReactMarkdown remarkPlugins={[remarkGfm]} className="markdown-body">
-                {summary}
-              </ReactMarkdown>
+              <ResearchMarkdown className="markdown-body">{summary}</ResearchMarkdown>
             ) : (
               <div className="info-box">No summary available.</div>
             )}
@@ -175,9 +173,7 @@ export default function ReportViewer({ result }) {
         {activeTab === 'report' && (
           <div className="tab-pane animate-fade-in markdown-container">
             {report ? (
-              <ReactMarkdown remarkPlugins={[remarkGfm]} className="markdown-body">
-                {report}
-              </ReactMarkdown>
+              <ResearchMarkdown className="markdown-body">{report}</ResearchMarkdown>
             ) : (
               <div className="info-box">No report available.</div>
             )}

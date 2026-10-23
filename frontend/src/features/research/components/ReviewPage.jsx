@@ -1,6 +1,5 @@
 import { ArrowLeft, BookOpen, Check, ChevronDown, Download, FileText, Loader2 } from 'lucide-react';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
+import ResearchMarkdown from '../../../components/ui/ResearchMarkdown';
 import ReportViewer from './ReportViewer';
 
 export default function ReviewPage({ session, locked, busy, reset, download }) {
@@ -31,7 +30,7 @@ export default function ReviewPage({ session, locked, busy, reset, download }) {
       <div className="review-summary">
         <span className="note-label">THE QUICK READ</span>
         <div className="markdown-body">
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>{session.summary}</ReactMarkdown>
+          <ResearchMarkdown>{session.summary}</ResearchMarkdown>
         </div>
       </div>
       <div className="coverage-grid">

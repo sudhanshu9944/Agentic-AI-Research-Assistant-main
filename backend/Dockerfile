@@ -23,7 +23,12 @@ RUN pip install --no-cache-dir --upgrade pip \
 COPY backend /app/backend
 
 # Create required directories for reports and memory
-RUN mkdir -p /app/reports /app/memory
+RUN groupadd --gid 10001 appuser \
+    && useradd --uid 10001 --gid appuser --create-home appuser \
+    && mkdir -p /app/reports /app/memory \
+    && chown -R appuser:appuser /app/reports /app/memory
+
+USER appuser
 
 # Expose port
 EXPOSE 8000

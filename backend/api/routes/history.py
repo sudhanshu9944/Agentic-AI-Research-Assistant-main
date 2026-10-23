@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import logging
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Path
+from typing import Annotated
 
 from backend.memory.memory_manager import MemoryManager
 from backend.schemas.models import HistoryItem, ResearchResponse
@@ -20,12 +21,12 @@ async def get_history():
         sessions = manager.list_sessions()
         return [HistoryItem(**s) for s in sessions]
     except Exception as e:
-        logger.error(f"Failed to fetch history: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("History lookup failed (%s)", type(e).__name__)
+        raise HTTPException(status_code=500, detail="Research history could not be loaded.") from e
 
 
 @router.get("/report/{session_id}")
-async def get_report(session_id: str):
+async def get_report(session_id: Annotated[str, Path(pattern=r"^[a-zA-Z0-9_-]{1,128}$")]):
     """Retrieve a specific research report by session ID."""
     manager = MemoryManager()
     session = manager.load_session(session_id)

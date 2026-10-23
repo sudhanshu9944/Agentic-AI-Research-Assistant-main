@@ -36,11 +36,11 @@ async def export_pdf_endpoint(request: ExportRequest):
             headers={"Content-Disposition": download_header(query, "pdf")},
         )
     except Exception as e:
-        logger.error(f"PDF export failed: {e}", exc_info=True)
+        logger.error("PDF export failed (%s)", type(e).__name__)
         raise HTTPException(
             status_code=500,
-            detail=f"PDF export failed: {str(e)}",
-        )
+            detail="PDF export could not be completed. Please retry.",
+        ) from e
 
 
 @router.post("/export/markdown")
@@ -62,8 +62,8 @@ async def export_markdown_endpoint(request: ExportRequest):
             headers={"Content-Disposition": download_header(query, "md")},
         )
     except Exception as e:
-        logger.error(f"Markdown export failed: {e}", exc_info=True)
+        logger.error("Markdown export failed (%s)", type(e).__name__)
         raise HTTPException(
             status_code=500,
-            detail=f"Markdown export failed: {str(e)}",
-        )
+            detail="Markdown export could not be completed. Please retry.",
+        ) from e

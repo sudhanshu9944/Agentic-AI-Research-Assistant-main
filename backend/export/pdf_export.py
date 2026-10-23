@@ -22,6 +22,7 @@ from typing import Optional
 from fpdf import FPDF
 
 from backend.config import settings
+from backend.security import safe_external_url
 
 logger = logging.getLogger(__name__)
 
@@ -545,7 +546,7 @@ def _parse_inline_spans(text: str) -> list[tuple[str, str, Optional[str]]]:
         elif m.group(3):
             spans.append(("italic", m.group(3), None))
         elif m.group(4):
-            spans.append(("link", m.group(4), m.group(5)))
+            spans.append(("link", m.group(4), safe_external_url(m.group(5))))
         elif m.group(6):
             spans.append(("normal", m.group(6), None))
 
@@ -844,7 +845,7 @@ def _render_sources_appendix(pdf: FPDF, sources: list[dict]) -> None:
         pdf.multi_cell(
             0, 6, _clean(f"[{idx}] {source.get('title', 'Source')}"), new_x="LMARGIN", new_y="NEXT"
         )
-        url = source.get("url", "")
+        url = safe_external_url(source.get("url", ""))
         if url:
             pdf.set_font("ReportSans", "", 8)
             pdf.set_text_color(*Colors.LINK_BLUE)

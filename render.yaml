@@ -18,6 +18,8 @@ services:
         value: https://api.groq.com/openai/v1
       - key: DEBUG
         value: "false"
+      - key: ALLOWED_ORIGINS
+        sync: false # Exact frontend origin, for example https://your-project.vercel.app
 
   # React Frontend Static Site (Frontend)
   - type: web

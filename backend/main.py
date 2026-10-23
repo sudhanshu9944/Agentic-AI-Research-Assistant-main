@@ -14,6 +14,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from backend.config import settings
+from backend.security import BrowserBoundaryMiddleware, RedactingFormatter
 
 # ──────────────────────────────────────────────
 # Logging Setup
@@ -25,6 +26,13 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 logger = logging.getLogger(__name__)
+for handler in logging.getLogger().handlers:
+    handler.setFormatter(
+        RedactingFormatter(
+            "%(asctime)s | %(levelname)-7s | %(name)s | %(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S",
+        )
+    )
 
 
 # ──────────────────────────────────────────────
@@ -71,11 +79,12 @@ app = FastAPI(
 # The browser uses anonymous API calls; local demo login does not issue server credentials.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=settings.ALLOWED_ORIGINS,
     allow_credentials=False,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST"],
+    allow_headers=["Content-Type"],
 )
+app.add_middleware(BrowserBoundaryMiddleware, allowed_origins=settings.ALLOWED_ORIGINS)
 
 # Include API routes
 from backend.api.routes import router  # noqa: E402

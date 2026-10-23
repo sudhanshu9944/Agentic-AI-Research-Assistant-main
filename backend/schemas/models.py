@@ -30,6 +30,7 @@ class ResearchRequest(BaseModel):
     )
     model: Optional[str] = Field(
         default=None,
+        max_length=160,
         description="OpenRouter model ID override (defaults to config).",
     )
     temperature: float = Field(default=0.3, ge=0, le=1)
@@ -40,7 +41,9 @@ class ResearchRequest(BaseModel):
 class ExportRequest(BaseModel):
     """Body for POST /export/pdf and POST /export/markdown."""
 
-    session_id: str = Field(..., description="Session ID of the research to export.")
+    session_id: str = Field(
+        ..., pattern=r"^[a-zA-Z0-9_-]{1,128}$", description="Session ID of the research to export."
+    )
 
 
 # ──────────────────────────────────────────────
