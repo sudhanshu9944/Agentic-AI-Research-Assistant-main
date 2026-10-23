@@ -15,3 +15,4 @@ pypdf==6.21.2
 Pillow==13.0.0
 tenacity==9.2.1
 tiktoken==0.14.0
+vercel-blob==0.5.0

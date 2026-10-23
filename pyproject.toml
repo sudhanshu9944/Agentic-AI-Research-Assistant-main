@@ -10,22 +10,23 @@ authors = [
 ]
 
 dependencies = [
-    "fastapi>=0.115",
-    "uvicorn[standard]>=0.30",
-    "pydantic>=2.7",
-    "python-dotenv>=1.0",
-    "python-multipart>=0.0.9",
-    "langgraph>=0.4",
-    "langchain-core>=0.3",
-    "langchain-openai>=0.3",
-    "httpx>=0.27",
-    "ddgs>=9.16,<10",
-    "fpdf2>=2.8",
-    "uharfbuzz>=0.39",
-    "pypdf>=5.0",
-    "Pillow>=10.0",
-    "tenacity>=9.0",
-    "tiktoken>=0.14",
+    "fastapi==0.161.0",
+    "uvicorn[standard]==0.54.0",
+    "pydantic==2.14.1",
+    "python-dotenv==1.2.4",
+    "python-multipart==0.0.32",
+    "langgraph==1.2.16",
+    "langchain-core==1.7.0",
+    "langchain-openai==1.7.2",
+    "httpx==0.28.1",
+    "ddgs==9.16.0",
+    "fpdf2==2.8.9",
+    "uharfbuzz==0.56.4",
+    "pypdf==6.21.2",
+    "Pillow==13.0.0",
+    "tenacity==9.2.1",
+    "tiktoken==0.14.0",
+    "vercel-blob==0.5.0",
 ]
 
 [project.optional-dependencies]
@@ -52,3 +53,10 @@ line-length = 100
 
 [tool.ruff.lint]
 select = ["E4", "E7", "E9", "F"]
+
+[tool.vercel]
+entrypoint = "backend.main:app"
+
+[tool.vercel.fastapi.static]
+cdn = true
+exclude = true

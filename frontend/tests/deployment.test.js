@@ -4,6 +4,7 @@ import { validateDeployment } from '../scripts/validate-deployment.mjs';
 
 test('Vercel builds require an HTTPS backend without embedded credentials', () => {
   validateDeployment({});
+  validateDeployment({ VERCEL: '1', VITE_API_BASE_URL: '/api' });
   validateDeployment({ VERCEL: '1', VITE_API_BASE_URL: 'https://research.example.com' });
   for (const url of [
     '',

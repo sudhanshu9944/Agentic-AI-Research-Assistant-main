@@ -40,6 +40,12 @@ class MemoryManager:
         """
         self.memory_dir = memory_dir or settings.MEMORY_DIR
         self.memory_dir.mkdir(parents=True, exist_ok=True)
+        self.remote = None
+        if settings.IS_VERCEL:
+            from backend.memory.blob_store import BlobStore
+            from backend.workspace import workspace_id
+
+            self.remote = BlobStore(workspace_id.get())
 
     def _session_path(self, session_id: str) -> Path:
         """Get the file path for a session ID."""
@@ -65,6 +71,9 @@ class MemoryManager:
         if "created_at" not in data:
             data["created_at"] = datetime.now(timezone.utc).isoformat()
         data["updated_at"] = datetime.now(timezone.utc).isoformat()
+        if self.remote:
+            self.remote.save(session_id, data)
+            return
 
         temporary = None
         try:
@@ -103,6 +112,8 @@ class MemoryManager:
         dict or None
             Session data if found, None otherwise.
         """
+        if self.remote:
+            return self.remote.load(session_id)
         filepath = self._session_path(session_id)
 
         if not filepath.exists():
@@ -131,6 +142,8 @@ class MemoryManager:
             List of session summaries sorted by creation date (newest first).
             Each dict has: session_id, query, created_at, summary_preview.
         """
+        if self.remote:
+            return self.remote.list()
         sessions = []
 
         for filepath in self.memory_dir.glob("*.json"):
@@ -173,6 +186,8 @@ class MemoryManager:
         bool
             True if deleted, False if not found.
         """
+        if self.remote:
+            return self.remote.delete(session_id)
         filepath = self._session_path(session_id)
 
         if not filepath.exists():
@@ -189,4 +204,8 @@ class MemoryManager:
 
     def session_exists(self, session_id: str) -> bool:
         """Check if a session exists."""
-        return self._session_path(session_id).exists()
+        return (
+            self.remote.load(session_id) is not None
+            if self.remote
+            else self._session_path(session_id).exists()
+        )

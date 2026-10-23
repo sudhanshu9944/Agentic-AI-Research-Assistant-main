@@ -1,6 +1,7 @@
 /** Stop Vercel builds before shipping a frontend without a usable backend URL. */
 export function validateDeployment(env) {
   if (!env.VERCEL) return;
+  if (env.VITE_API_BASE_URL === '/api') return;
   let target;
   try {
     target = new URL(env.VITE_API_BASE_URL || '');

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import os
 import re
 from urllib.parse import urlsplit
 
@@ -16,8 +17,13 @@ class RedactingFormatter(logging.Formatter):
         from backend.config import settings
 
         message = super().format(record)
-        if settings.OPENROUTER_API_KEY:
-            message = message.replace(settings.OPENROUTER_API_KEY, "[REDACTED]")
+        for secret in (
+            settings.OPENROUTER_API_KEY,
+            settings.SESSION_SECRET,
+            os.getenv("BLOB_READ_WRITE_TOKEN", ""),
+        ):
+            if secret:
+                message = message.replace(secret, "[REDACTED]")
         return re.sub(
             r"\b(?:gsk_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{30,}|"
             r"gh[pousr]_[A-Za-z0-9]{30,}|sk-(?:proj-)?[A-Za-z0-9_-]{30,})",

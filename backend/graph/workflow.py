@@ -11,6 +11,7 @@ and returns a partial state update.
 from __future__ import annotations
 
 import logging
+from starlette.concurrency import run_in_threadpool
 import uuid
 from datetime import datetime, timezone
 
@@ -62,7 +63,7 @@ async def memory_saver_node(state: dict) -> dict:
             "created_at": timestamp,
         }
 
-        manager.save_session(session_id, session_data)
+        await run_in_threadpool(manager.save_session, session_id, session_data)
 
         logger.info(f"[Memory] Session {session_id} saved successfully")
 

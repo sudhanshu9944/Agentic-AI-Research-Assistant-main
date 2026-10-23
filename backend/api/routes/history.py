@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from starlette.concurrency import run_in_threadpool
 from fastapi import APIRouter, HTTPException, Path
 from typing import Annotated
 
@@ -18,7 +19,7 @@ async def get_history():
     """List all past research sessions."""
     try:
         manager = MemoryManager()
-        sessions = manager.list_sessions()
+        sessions = await run_in_threadpool(manager.list_sessions)
         return [HistoryItem(**s) for s in sessions]
     except Exception as e:
         logger.error("History lookup failed (%s)", type(e).__name__)
@@ -29,7 +30,7 @@ async def get_history():
 async def get_report(session_id: Annotated[str, Path(pattern=r"^[a-zA-Z0-9_-]{1,128}$")]):
     """Retrieve a specific research report by session ID."""
     manager = MemoryManager()
-    session = manager.load_session(session_id)
+    session = await run_in_threadpool(manager.load_session, session_id)
 
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")

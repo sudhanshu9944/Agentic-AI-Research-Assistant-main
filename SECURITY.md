@@ -1,9 +1,11 @@
 # Security and privacy
 
-This release is a local college demonstration. Browser accounts and credits
-are not server authentication or API quotas. The backend research library is
-shared within its installation. Keep it local/private; public deployment needs
-server identity, report ownership checks and server-enforced usage limits.
+Browser accounts and credits are not server authentication or API quotas.
+Local installations share a file-based research library. On Vercel, signed
+anonymous workspace cookies restrict reports to separate private Blob prefixes.
+This protects report lookup across browser workspaces, but does not prevent API
+quota abuse or provide verified user identities. Keep provider limits enabled
+and add server authentication and rate limits before unrestricted paid usage.
 
 ## Credential handling
 
@@ -35,6 +37,9 @@ Local account names, email addresses, salted password hashes and app credits
 stay in that browser's localStorage. They are not sent to the backend for
 authentication. Research topics, chosen scope and retrieved evidence are sent
 to the configured AI provider and public search services to perform research.
+Hosted research reports are stored privately in the connected Vercel Blob store.
+The workspace cookie is Secure, HttpOnly and SameSite=Lax; clearing it loses
+access to that library, and changing SESSION_SECRET invalidates old cookies.
 Google Fonts requests load the UI font. No additional analytics is configured.
 Do not use the demo as a private document or credential store.
 

@@ -43,7 +43,7 @@ completion; optional reranking failure preserves the original source order.
 | `backend/graph` | Workflow state and graph composition. |
 | `backend/agents` | Planner, researcher, analyst, summarizer, reporter. |
 | `backend/tools` | Provider and public search adapters. |
-| `backend/memory` | Session validation and atomic JSON persistence. |
+| `backend/memory` | Atomic local JSON or private hosted Blob persistence. |
 | `backend/export` | PDF/Markdown rendering and bundled font assets. |
 | `backend/config.py` | Backend environment configuration. |
 
@@ -61,7 +61,11 @@ filenames; Markdown frontmatter is serialized safely.
 
 Browser accounts store salted PBKDF2 password hashes and demo credits locally.
 They do not authenticate API calls. Clearing browser storage removes them.
-The backend history is shared by its instance. The progress UI is an estimate
-because research currently returns one final response, not streamed progress.
-For public production use, add server identity, per-user storage, rate limits
-and durable storage before treating this as a private service.
+The local backend history is shared by its installation. Vercel requests use
+`backend/workspace.py` to verify a signed anonymous browser cookie and scope
+private Blob reads/writes to that workspace. The API lives under `/api`; the
+built frontend is served through Vercel's static CDN. Temporary files use the
+writable system temporary directory. Storage and PDF work run outside the async
+event loop. The progress UI is an estimate because research returns one final
+response, rather than streamed progress. Public paid usage still needs verified
+server accounts and enforced usage limits.

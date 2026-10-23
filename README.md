@@ -146,14 +146,16 @@ The same checks run through GitHub Actions on pushes and pull requests.
 
 ## Deployment and privacy
 
-The current hosting configuration uses a Vercel frontend with a separate
-FastAPI backend. Follow the [deployment guide](docs/DEPLOYMENT.md) for build
-settings, the backend URL and allowed browser origins.
+Vercel runs the React frontend and FastAPI API together. Reports use private
+Blob storage, separated by a signed browser workspace cookie. Follow the
+[deployment guide](docs/DEPLOYMENT.md) for environment and storage setup.
+Local development keeps the existing file-based report library.
 
-Accounts and demo credits are stored in your browser. They do not authenticate
-API calls; the backend library is shared by its installation. Keep the demo
-local/private until server-side authentication, report ownership and quotas
-are implemented. See [SECURITY.md](SECURITY.md) for the security boundaries.
+Accounts and demo credits stay in your browser. They are not server accounts or
+enforced API quotas. Clearing the hosted workspace cookie loses access to that
+browser's saved reports. Use provider free-tier limits for demonstrations; public
+paid usage needs server authentication and abuse controls. See
+[SECURITY.md](SECURITY.md) for the boundaries.
 
 Research uses public search excerpts. It does not ingest uploaded PDFs or run
 OCR. Search availability and free-provider quotas can affect results.

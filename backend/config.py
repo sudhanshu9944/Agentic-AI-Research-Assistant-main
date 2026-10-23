@@ -5,6 +5,7 @@ Centralizes all settings using python-dotenv for .env file support.
 """
 
 import os
+import tempfile
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -28,6 +29,8 @@ class Settings:
     GROQ_TOKEN_BUDGET: int = int(os.getenv("GROQ_TOKEN_BUDGET", "8000"))
 
     # Backend
+    IS_VERCEL: bool = os.getenv("VERCEL") == "1"
+    SESSION_SECRET: str = os.getenv("SESSION_SECRET", "")
     BACKEND_HOST: str = os.getenv("BACKEND_HOST", "127.0.0.1")
     BACKEND_PORT: int = int(os.getenv("PORT") or os.getenv("BACKEND_PORT") or "8000")
     ALLOWED_ORIGINS: list[str] = [
@@ -39,6 +42,12 @@ class Settings:
         ).split(",")
         if origin.strip() and origin.strip() != "*"
     ]
+    if IS_VERCEL:
+        ALLOWED_ORIGINS += [
+            f"https://{host}"
+            for host in (os.getenv("VERCEL_URL"), os.getenv("VERCEL_PROJECT_PRODUCTION_URL"))
+            if host
+        ]
 
     # App
     APP_NAME: str = os.getenv("APP_NAME", "AI Research Assistant")
@@ -46,8 +55,9 @@ class Settings:
 
     # Paths
     PROJECT_ROOT: Path = _PROJECT_ROOT
-    REPORTS_DIR: Path = Path(os.getenv("REPORTS_DIR", str(_PROJECT_ROOT / "reports")))
-    MEMORY_DIR: Path = Path(os.getenv("MEMORY_DIR", str(_PROJECT_ROOT / "memory")))
+    _DATA_ROOT = Path(tempfile.gettempdir()) / "research-ai" if IS_VERCEL else _PROJECT_ROOT
+    REPORTS_DIR: Path = Path(os.getenv("REPORTS_DIR", str(_DATA_ROOT / "reports")))
+    MEMORY_DIR: Path = Path(os.getenv("MEMORY_DIR", str(_DATA_ROOT / "memory")))
 
     def __init__(self) -> None:
         """Ensure required directories exist."""

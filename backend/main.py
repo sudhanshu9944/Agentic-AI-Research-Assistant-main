@@ -84,12 +84,23 @@ app.add_middleware(
     allow_methods=["GET", "POST"],
     allow_headers=["Content-Type"],
 )
+if settings.IS_VERCEL:
+    from backend.workspace import WorkspaceMiddleware
+
+    app.add_middleware(WorkspaceMiddleware, secret=settings.SESSION_SECRET)
 app.add_middleware(BrowserBoundaryMiddleware, allowed_origins=settings.ALLOWED_ORIGINS)
 
 # Include API routes
 from backend.api.routes import router  # noqa: E402
 
-app.include_router(router)
+app.include_router(router, prefix="/api" if settings.IS_VERCEL else "")
+if settings.IS_VERCEL:
+    app.frontend(
+        "/",
+        directory=str(settings.PROJECT_ROOT / "frontend" / "dist"),
+        fallback="index.html",
+        check_dir=False,
+    )
 
 
 # ──────────────────────────────────────────────

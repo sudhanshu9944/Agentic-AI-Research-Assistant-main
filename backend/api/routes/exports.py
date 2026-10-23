@@ -21,7 +21,7 @@ router = APIRouter()
 async def export_pdf_endpoint(request: ExportRequest):
     """Export a research report as a PDF file."""
     manager = MemoryManager()
-    session = manager.load_session(request.session_id)
+    session = await run_in_threadpool(manager.load_session, request.session_id)
 
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
@@ -47,7 +47,7 @@ async def export_pdf_endpoint(request: ExportRequest):
 async def export_markdown_endpoint(request: ExportRequest):
     """Export a research report as a Markdown file."""
     manager = MemoryManager()
-    session = manager.load_session(request.session_id)
+    session = await run_in_threadpool(manager.load_session, request.session_id)
 
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
