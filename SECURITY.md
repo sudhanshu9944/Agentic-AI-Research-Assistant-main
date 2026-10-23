@@ -13,8 +13,6 @@ server identity, report ownership checks and server-enforced usage limits.
 - Never place secrets under a `VITE_` variable: those values reach the browser.
 - Backend log formatting redacts the configured key and common token formats.
   API failures return generic messages rather than upstream exception details.
-- The temporary GitHub publishing token used for the previous release was
-  revoked after upload and its local temporary file removed.
 
 ## Local and browser boundaries
 
@@ -43,10 +41,9 @@ Do not use the demo as a private document or credential store.
 ## Integrity and dependencies
 
 Use `npm ci` with the checked-in lockfile. Runtime Python dependencies are
-pinned in `requirements.txt`; development checks are in CONTRIBUTING.md.
+pinned in `requirements.txt`; development checks are in README.md.
 Dependency audits report known advisories at the time queried, not a guarantee
-against all vulnerabilities. The release security review is documented in
-[docs/SECURITY_REVIEW.md](docs/SECURITY_REVIEW.md).
+against all vulnerabilities.
 
 Report suspected issues privately to a repository maintainer through GitHub.
 Do not open a public issue containing credentials or private reports. Rotate

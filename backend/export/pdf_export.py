@@ -1,5 +1,5 @@
 """
-PDF Export Module — Premium Infographic-Style Reports.
+PDF report rendering and downloads.
 
 Converts research reports to visually rich PDF documents using fpdf2.
 Features:

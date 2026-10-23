@@ -95,3 +95,28 @@ npm run dev
 | Local account disappeared | Browser accounts are specific to browser and origin. Clearing storage removes them; ports 5173 and 4173 have separate storage. |
 
 Saved reports live in `memory/`. Back up that folder if moving research to another installation; do not publish private reports with the source.
+
+
+## Configuration reference
+
+Backend settings are read from the root `.env` when the server starts.
+
+| Variable | Purpose |
+| --- | --- |
+| `GROQ_API_KEY` | Provider key. Never put it in frontend code. |
+| `OPENROUTER_API_KEY` | Legacy key alias; used when `GROQ_API_KEY` is absent. |
+| `OPENROUTER_BASE_URL` | Provider base URL; defaults to Groq's OpenAI-compatible endpoint. |
+| `DEFAULT_MODEL` / `RERANKER_MODEL` | Research and relevance-ranking model IDs. |
+| `GROQ_TOKEN_BUDGET` | Request/completion budgeting; default 8000. |
+| `BACKEND_HOST` / `BACKEND_PORT` | Local bind address and port; defaults 127.0.0.1:8000. |
+| `ALLOWED_ORIGINS` | Exact comma-separated frontend origins; local ports 5173, 4173 and 80 are allowed by default. |
+| `MEMORY_DIR` / `REPORTS_DIR` | Writable session and file-export directories. |
+| `DEBUG` | Additional development logs; defaults false. |
+
+Leave frontend `VITE_API_BASE_URL` unset locally to use the `/api` proxy.
+On a static host, set it to the public HTTPS backend URL and rebuild.
+This setting is public; never place credentials in a `VITE_` variable.
+
+Repository links and credits are in `frontend/src/config/project.js`.
+Model choices are in `frontend/src/features/research/config.js`; demo token
+prices are in `frontend/src/features/account/services/localAccounts.js`.

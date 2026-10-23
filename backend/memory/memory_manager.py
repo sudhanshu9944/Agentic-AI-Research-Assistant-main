@@ -3,7 +3,7 @@ JSON-Based Memory Manager.
 
 Provides persistent storage for research sessions using JSON files.
 Each session is stored as a separate file in the memory/ directory.
-Thread-safe operations with asyncio locks.
+Completed sessions are written through atomic file replacement.
 """
 
 from __future__ import annotations

@@ -1,47 +1,72 @@
+<div align="center">
+
 # Research.AI
 
-A research workspace where you choose the scope, inspect source-based findings, and generate a PDF when ready. Built with React, FastAPI, LangGraph and Groq.
+**Choose the scope. Review the findings. Export when ready.**
 
-![Light theme](docs/screenshots/workspace-light.png)
+A research workspace built with React, FastAPI, LangGraph and Groq.
+
+[![Quality checks](https://github.com/sudhanshu9944/Agentic-AI-Research-Assistant-main/actions/workflows/quality.yml/badge.svg)](https://github.com/sudhanshu9944/Agentic-AI-Research-Assistant-main/actions/workflows/quality.yml)
+
+[Getting started](#getting-started) · [How it works](#how-it-works) · [Architecture](docs/ARCHITECTURE.md) · [Deployment](docs/DEPLOYMENT.md)
+
+</div>
+
+![Research.AI workspace in light mode](docs/screenshots/workspace-light.png)
+
+## Overview
+
+Research.AI turns a topic into a report you can inspect before downloading.
+Choose from suggested research angles, add your own, and review the summary,
+sources and evidence gaps before generating a PDF or Markdown file.
+
+| Feature | What you can do |
+| --- | --- |
+| Guided research | Choose suggested angles with checkboxes or add a custom topic. |
+| Review before export | Read the summary, selected scope, excluded topics and evidence gaps. |
+| Source references | Inspect the public search excerpts used in the report. |
+| PDF and Markdown | Download the reviewed report in either format. |
+| Research library | Reopen reports saved by the backend installation. |
+| Light and dark mode | Keep your preferred theme across visits. |
+| Local accounts | Sign up in your browser and track demo app tokens. |
 
 <details>
-<summary>Dark theme and research preview</summary>
+<summary><strong>Dark mode</strong></summary>
 
-![Dark theme](docs/screenshots/workspace-dark.png)
-![Research preview](docs/screenshots/research-preview.png)
+![Research.AI workspace in dark mode](docs/screenshots/workspace-dark.png)
 
 </details>
 
-## Start here
+<details>
+<summary><strong>Research preview</strong></summary>
 
-- [Local installation and daily use](docs/LOCAL_SETUP.md)
-- [API keys and configuration](docs/CONFIGURATION.md)
-- [Architecture and code map](docs/ARCHITECTURE.md)
-- [API reference](docs/API.md)
-- [Vercel frontend and backend deployment](docs/DEPLOYMENT.md)
-- [Verification and known limits](docs/VERIFICATION.md)
-- [Security and privacy](SECURITY.md)
-- [Development conventions](CONTRIBUTING.md)
+![Research summary and scope review](docs/screenshots/research-preview.png)
 
-## Run locally on Windows
+</details>
 
-Install Python 3.12 and Node.js 24 LTS. Extract the ZIP, then open a terminal in the project root:
+## Getting started
+
+Install **Python 3.12** and **Node.js 24**, then open a terminal in the project root.
+
+**1. Install the backend**
 
 ```powershell
 py -3.12 -m venv .venv
 .venv\Scripts\python.exe -m pip install -r requirements-dev.txt
-Copy-Item .env.example .env
 ```
 
-Open `.env` and fill in `GROQ_API_KEY`. Keep it private; do not overwrite an existing configured `.env`.
+**2. Configure the API key**
 
-Start the backend:
+Copy `.env.example` to `.env` if the file does not already exist. Open `.env`
+and set `GROQ_API_KEY` to your own Groq key. Keep this file private.
+
+**3. Start the backend**
 
 ```powershell
 .venv\Scripts\python.exe -m uvicorn backend.main:app --host 127.0.0.1 --port 8000
 ```
 
-Open a second terminal in the project root:
+**4. Start the frontend in a second terminal**
 
 ```powershell
 cd frontend
@@ -49,66 +74,96 @@ npm ci
 npm run dev
 ```
 
-Open **http://127.0.0.1:5173** and keep both terminals running. No Python activation or execution-policy change is needed. See the local guide for macOS/Linux, preview mode and troubleshooting.
+Open **http://127.0.0.1:5173**. Keep both terminals running.
 
-## Research flow
+See the [local setup guide](docs/LOCAL_SETUP.md) for macOS/Linux, daily startup,
+API-key replacement, configuration and troubleshooting. The backend's API
+reference is available at **http://127.0.0.1:8000/docs** while it is running.
 
-1. Sign up locally for 100 demo app tokens, or log in to this browser's account.
-2. Enter a topic. AI suggests relevant angles for 2 app tokens.
-3. Select the checkboxes you want; add your own angle if needed.
-4. Research the chosen scope for 10 app tokens.
-5. Read the summary, excluded topics and evidence gaps; inspect sources and the full report.
-6. Generate a PDF or Markdown file for free. Failed operations refund their reserved app tokens.
+## How it works
 
-Theme selection and local login persist in the browser. Public links and footer credits are centralized in `frontend/src/config/project.js`.
+1. Create a browser-local account or log in to an existing one.
+2. Enter a topic and request suggested research angles.
+3. Select the angles to include; add a custom angle if needed.
+4. Run the research and review the findings, sources and limitations.
+5. Choose **Generate PDF** or **Markdown** when the report is ready.
 
-## Repository layout
+| Demo app tokens | Amount |
+| --- | ---: |
+| New account | 100 |
+| Topic recommendations | 2 |
+| Research | 10 |
+| PDF / Markdown export | 0 |
+
+Failed operations refund their reserved app tokens. These browser-local credits
+are separate from the AI provider's actual quota.
+
+## Project structure
 
 ```text
 backend/
-  api/routes/        Health, research, history and export endpoints
-  agents/            Planning, research, analysis, summary and reporting
-  services/          Provider calls, retry budgets and relevance ranking
-  tools/             Search adapters
-  graph/             Workflow composition and persistence handoff
-  schemas/           API and workflow-state contracts
-  memory/            Atomic JSON session storage
-  export/            PDF/Markdown rendering, fonts and licenses
+  api/              Request validation and HTTP routes
+  agents/           Planning, research, analysis and report generation
+  graph/            Workflow composition
+  services/         Model calls and relevance ranking
+  tools/            Public search adapters
+  memory/           Saved research sessions
+  export/           PDF, Markdown and bundled fonts
 frontend/
-  src/app/           App composition and workspace orchestration
-  src/features/      Research views, local accounts and theme behavior
-  src/components/    Shared layout and notifications
-  src/services/      HTTP client and explicit file downloads
-  src/config/        Public project links and credits
-  src/styles/        Readable styles grouped by responsibility
-  tests/             Account/token-ledger behavior tests
-  scripts/           Deployment configuration validation
-tests/               Backend API, workflow, storage and export tests
-docs/                Setup, architecture, configuration and deployment
-.github/workflows/   Automated quality checks
+  src/app/          App composition and workflow state
+  src/features/     Research, local accounts and theme
+  src/components/   Shared interface components
+  src/services/     API client, downloads and link validation
+  src/styles/       Layout, components, themes and responsive styles
+  tests/            Frontend behavior tests
+tests/              Backend regression and security tests
+docs/               Setup, architecture and deployment
 ```
 
-## Development checks
+The [architecture guide](docs/ARCHITECTURE.md) explains the request flow and
+module boundaries.
+
+## Development
+
+From the project root:
 
 ```powershell
 .venv\Scripts\python.exe -m ruff check backend tests
 .venv\Scripts\python.exe -m ruff format --check backend tests
 .venv\Scripts\python.exe -m pytest -q
-cd frontend
+```
+
+From `frontend`:
+
+```sh
 npm run format:check
 npm run lint
 npm test
 npm run build
 ```
 
-## Boundaries
+The same checks run through GitHub Actions on pushes and pull requests.
 
-Local accounts and app tokens live in browser localStorage. They are demonstration controls, not server authentication or secure billing. The saved research library belongs to the installation. Groq's actual quota is separate.
+## Deployment and privacy
 
-Research uses retrieved search excerpts, not complete article/PDF ingestion or uploaded-PDF OCR. Public search and free API availability vary. Essential failures produce errors rather than fabricated successful reports.
+The current hosting configuration uses a Vercel frontend with a separate
+FastAPI backend. Follow the [deployment guide](docs/DEPLOYMENT.md) for build
+settings, the backend URL and allowed browser origins.
 
-The source package excludes API keys, account passwords, generated reports, history, virtual environments and node_modules. See [credits](CREDITS.md) and the bundled [font license](backend/export/fonts/LICENSE).
+Accounts and demo credits are stored in your browser. They do not authenticate
+API calls; the backend library is shared by its installation. Keep the demo
+local/private until server-side authentication, report ownership and quotas
+are implemented. See [SECURITY.md](SECURITY.md) for the security boundaries.
 
-Made with ❤️ by **Sudhanshu Singh, Himanshu Chauhan, Tanmay Pahuja**.
+Research uses public search excerpts. It does not ingest uploaded PDFs or run
+OCR. Search availability and free-provider quotas can affect results.
 
-*Built with ❤️ using* React · FastAPI · LangGraph · Groq.
+---
+
+<div align="center">
+
+Made with ❤️ by **Sudhanshu Singh, Himanshu Chauhan, Tanmay Pahuja**
+
+*Built with ❤️ using* React · FastAPI · LangGraph · Groq
+
+</div>
