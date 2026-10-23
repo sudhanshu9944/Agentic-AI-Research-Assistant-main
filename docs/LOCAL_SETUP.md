@@ -120,3 +120,18 @@ This setting is public; never place credentials in a `VITE_` variable.
 Repository links and credits are in `frontend/src/config/project.js`.
 Model choices are in `frontend/src/features/research/config.js`; demo token
 prices are in `frontend/src/features/account/services/localAccounts.js`.
+
+## Change the model or provider
+
+For the same Groq provider, replace only `GROQ_API_KEY` in the root `.env` and
+restart the backend. For a different OpenAI-compatible provider, also change
+`OPENROUTER_BASE_URL`, `DEFAULT_MODEL` and `RERANKER_MODEL` to values it supports.
+The model selected in the browser is sent in each request: update `MODELS` in
+`frontend/src/features/research/config.js` if adding/removing provider models.
+Never put the provider key in that frontend file.
+
+On Vercel, change keys through the project's **Settings → Environment Variables**
+and redeploy. The hosted UI and API run together; local development needs neither
+Blob credentials nor SESSION_SECRET. Leave VERCEL unset on your computer.
+
+Live demo: https://agentic-ai-research-assistant-main.vercel.app/
